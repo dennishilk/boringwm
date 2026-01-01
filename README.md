@@ -1,9 +1,4 @@
-<p align="center">
-  <img src="assets/logo/boringwm-logo.png" width="396">
-</p>
-
-
-
+## 🪟 BoringWM
 
 ![Language](https://img.shields.io/badge/language-Rust-orange)
 ![X11](https://img.shields.io/badge/display-X11-blue)
