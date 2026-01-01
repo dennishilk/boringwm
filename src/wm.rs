@@ -1,0 +1,234 @@
+use anyhow::Context;
+use log::info;
+use std::process::Command;
+use x11rb::connection::Connection;
+use x11rb::protocol::Event;
+use x11rb::protocol::xproto::*;
+use x11rb::protocol::xproto::ConnectionExt;
+use x11rb::rust_connection::RustConnection;
+use x11rb::CURRENT_TIME;
+
+use crate::keys;
+use crate::layout;
+use crate::state::WmState;
+
+const BORDER_WIDTH: u32 = 2;
+const BORDER_FOCUSED: u32 = 0x88CCFF;
+const BORDER_NORMAL: u32 = 0x333333;
+
+pub fn run() -> anyhow::Result<()> {
+    let (conn, screen_num) = x11rb::connect(None).context("X11 connect failed")?;
+    let screen = &conn.setup().roots[screen_num];
+    let root = screen.root;
+
+    conn.change_window_attributes(
+        root,
+        &ChangeWindowAttributesAux::new().event_mask(
+            EventMask::SUBSTRUCTURE_REDIRECT
+                | EventMask::SUBSTRUCTURE_NOTIFY
+                | EventMask::KEY_PRESS,
+        ),
+    )?;
+
+    // Autostart (user controlled)
+    let _ = Command::new("sh")
+        .arg("-c")
+        .arg("$HOME/.config/boringwm/autostart.sh")
+        .spawn();
+
+    keys::grab_keys(&conn, root);
+    conn.flush()?;
+
+    info!("boringwm running");
+
+    let mut state = WmState::new();
+
+    loop {
+        let event = conn.wait_for_event()?;
+        match event {
+            Event::MapRequest(e) => {
+                let w = e.window;
+
+                if is_fullscreen(&conn, &screen, w) {
+                    let _ = conn.map_window(w);
+                    continue;
+                }
+
+                let _ = conn.change_window_attributes(
+                    w,
+                    &ChangeWindowAttributesAux::new()
+                        .border_pixel(BORDER_NORMAL)
+                        .event_mask(EventMask::FOCUS_CHANGE),
+                );
+
+                let _ = conn.configure_window(
+                    w,
+                    &ConfigureWindowAux::new().border_width(BORDER_WIDTH),
+                );
+
+                state.windows.push(w);
+                state.focused = state.windows.len() - 1;
+
+                let _ = conn.map_window(w);
+                focus(&conn, &state);
+                retile(&conn, &screen, &state);
+            }
+
+            Event::DestroyNotify(e) => {
+                state.windows.retain(|&x| x != e.window);
+                state.focused = 0;
+                focus(&conn, &state);
+                retile(&conn, &screen, &state);
+            }
+
+            Event::KeyPress(e) => {
+                handle_key(&conn, &screen, &mut state, e.detail);
+            }
+
+            _ => {}
+        }
+    }
+}
+
+fn handle_key(
+    conn: &RustConnection,
+    screen: &Screen,
+    state: &mut WmState,
+    keycode: u8,
+) {
+    match keycode {
+        keys::KEY_RETURN => {
+            let _ = Command::new("kitty").spawn();
+        }
+        keys::KEY_Q => {
+            if let Some(&w) = state.windows.get(state.focused) {
+                close_window(conn, w);
+            }
+        }
+        keys::KEY_J => {
+            state.focus_next();
+            focus(conn, state);
+        }
+        keys::KEY_K => {
+            state.focus_prev();
+            focus(conn, state);
+        }
+        _ => {}
+    }
+
+    retile(conn, screen, state);
+}
+
+fn close_window(conn: &RustConnection, window: Window) {
+    let wm_protocols = conn
+        .intern_atom(false, b"WM_PROTOCOLS")
+        .unwrap()
+        .reply()
+        .unwrap()
+        .atom;
+
+    let wm_delete = conn
+        .intern_atom(false, b"WM_DELETE_WINDOW")
+        .unwrap()
+        .reply()
+        .unwrap()
+        .atom;
+
+    let event = ClientMessageEvent {
+        response_type: CLIENT_MESSAGE_EVENT,
+        format: 32,
+        sequence: 0,
+        window,
+        type_: wm_protocols,
+        data: ClientMessageData::from([wm_delete, CURRENT_TIME, 0, 0, 0]),
+    };
+
+    let _ = conn.send_event(false, window, EventMask::NO_EVENT, event);
+}
+
+fn focus(conn: &RustConnection, state: &WmState) {
+    for (i, &w) in state.windows.iter().enumerate() {
+        let color = if i == state.focused {
+            BORDER_FOCUSED
+        } else {
+            BORDER_NORMAL
+        };
+
+        let _ = conn.change_window_attributes(
+            w,
+            &ChangeWindowAttributesAux::new().border_pixel(color),
+        );
+    }
+
+    if let Some(&w) = state.windows.get(state.focused) {
+        let _ = conn.set_input_focus(
+            InputFocus::POINTER_ROOT,
+            w,
+            CURRENT_TIME,
+        );
+
+        let _ = conn.configure_window(
+            w,
+            &ConfigureWindowAux::new().stack_mode(StackMode::ABOVE),
+        );
+    }
+}
+
+fn retile(conn: &RustConnection, screen: &Screen, state: &WmState) {
+    layout::tile(
+        conn,
+        screen.width_in_pixels,
+        screen.height_in_pixels,
+        &state.windows,
+        state.master_ratio,
+    );
+    let _ = conn.flush();
+}
+
+fn is_fullscreen(
+    conn: &RustConnection,
+    screen: &Screen,
+    window: Window,
+) -> bool {
+    let net_wm_state = conn
+        .intern_atom(false, b"_NET_WM_STATE")
+        .unwrap()
+        .reply()
+        .unwrap()
+        .atom;
+
+    let net_wm_state_fs = conn
+        .intern_atom(false, b"_NET_WM_STATE_FULLSCREEN")
+        .unwrap()
+        .reply()
+        .unwrap()
+        .atom;
+
+    if let Ok(reply) = conn.get_property(
+        false,
+        window,
+        net_wm_state,
+        AtomEnum::ATOM,
+        0,
+        32,
+    ) {
+        if let Ok(prop) = reply.reply() {
+            if let Some(values) = prop.value32() {
+                let atoms: Vec<u32> = values.collect();
+                if atoms.contains(&net_wm_state_fs) {
+                    let _ = conn.configure_window(
+                        window,
+                        &ConfigureWindowAux::new()
+                            .x(Some(0))
+                            .y(Some(0))
+                            .width(Some(screen.width_in_pixels as u32))
+                            .height(Some(screen.height_in_pixels as u32))
+                            .border_width(0),
+                    );
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
