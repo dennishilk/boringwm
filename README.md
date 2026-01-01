@@ -1,4 +1,4 @@
-# 🪟 BoringWM
+
 
 ![Language](https://img.shields.io/badge/language-Rust-orange)
 ![X11](https://img.shields.io/badge/display-X11-blue)
@@ -82,6 +82,32 @@ Configuration and extensibility may be added later, but never at the cost of sim
 | Mod + Q | Close window |
 | Mod + J | Focus next window |
 | Mod + K | Focus previous window |
+
+---
+
+🇬🇧 Wallpaper setup
+
+BoringWM does not manage wallpapers itself.
+Wallpaper handling is intentionally delegated to external tools to keep the window manager simple and predictable.
+A common and minimal solution is feh.
+
+An official, minimal wallpaper is included in this repository under:
+
+assets/wallpaper/boringwm-wallpaper.png
+
+Set the wallpaper
+
+Copy the wallpaper to a fixed location:
+
+cp assets/wallpaper/boringwm-wallpaper.png ~/.wallpaper
+
+
+Then add the following line to your BoringWM autostart script:
+
+feh --bg-fill "$HOME/.wallpaper" &
+
+
+This approach keeps wallpaper configuration explicit, static, and boring by design.
 
 ---
 
@@ -200,6 +226,30 @@ aber niemals auf Kosten von Einfachheit oder Korrektheit.
 | Mod + Q | Fenster schließen |
 | Mod + J | Nächstes Fenster fokussieren |
 | Mod + K | Vorheriges Fenster fokussieren |
+
+---
+
+🇩🇪 Wallpaper einrichten 
+
+BoringWM verwaltet Wallpaper bewusst nicht selbst.
+
+Die Hintergrundverwaltung wird absichtlich an externe Tools ausgelagert, um den Window-Manager einfach und vorhersehbar zu halten.
+Eine gängige und minimalistische Lösung ist feh.
+
+Ein offizielles, minimalistisches Wallpaper ist im Repository enthalten:
+assets/wallpaper/boringwm-wallpaper.png
+
+Kopiere das Wallpaper an einen festen Ort:
+
+cp assets/wallpaper/boringwm-wallpaper.png ~/.wallpaper
+
+
+Füge anschließend folgende Zeile in dein Autostart-Skript von BoringWM ein:
+
+feh --bg-fill "$HOME/.wallpaper" &
+
+
+So bleibt die Wallpaper-Konfiguration explizit, statisch und boring by design.
 
 ---
 
