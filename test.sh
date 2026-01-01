@@ -48,6 +48,16 @@ echo "==> Installing recommended desktop tools"
 sudo apt install -y kitty picom feh
 
 # --------------------------------------------------
+# Wallpaper (automatic)
+# --------------------------------------------------
+echo "==> Installing default wallpaper"
+if [ -f assets/wallpaper/boringwm-wallpaper.png ]; then
+  cp assets/wallpaper/boringwm-wallpaper.png "$HOME/.wallpaper"
+else
+  echo "!! Wallpaper not found, skipping"
+fi
+
+# --------------------------------------------------
 # Autostart configuration
 # --------------------------------------------------
 echo "==> Setting up autostart"
@@ -70,9 +80,31 @@ exec boringwm
 EOF
 
 # --------------------------------------------------
+# Auto startx on tty1 (boring & optional)
+# --------------------------------------------------
+echo
+echo "==> Enable automatic startx on tty1? (y/N)"
+read -r answer
+
+if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+  echo "==> Enabling auto-start X on tty1"
+
+  cat >> "$HOME/.bash_profile" << 'EOF'
+
+# Auto-start X on tty1 (BoringWM)
+if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+  exec startx
+fi
+EOF
+
+else
+  echo "==> Skipping auto-start X"
+fi
+
+# --------------------------------------------------
 # Done
 # --------------------------------------------------
 echo
 echo "==> Setup complete."
-echo "==> Place a wallpaper at: ~/.wallpaper"
-echo "==> Start BoringWM with: startx"
+echo "==> Log in on tty1 to start BoringWM automatically"
+echo "==> Or start manually with: startx"
