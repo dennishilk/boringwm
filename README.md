@@ -1,4 +1,6 @@
-# <img src="assets/icon/boringwm-logo.png" width="32" align="center"> BoringWM
+# <img src="./assets/icon/boringwm-icon.png" width="32"> BoringWM
+
+
 
 
 ![Language](https://img.shields.io/badge/language-Rust-orange)
