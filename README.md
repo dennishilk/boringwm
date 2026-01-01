@@ -1,4 +1,6 @@
-# <img src="./assets/icon/boringwm-icon.png" width="32"> BoringWM
+<p align="center">
+  <img src="assets/logo/boringwm-logo.png" width="396">
+</p>
 
 
 
@@ -9,9 +11,6 @@
 ![Target](https://img.shields.io/badge/target-Debian%20Stable-green)
 ![License](https://img.shields.io/badge/license-MIT-darkgrey)
 ![Philosophy](https://img.shields.io/badge/philosophy-boring%20by%20design-black)
-
-
-
 
 ---
 
