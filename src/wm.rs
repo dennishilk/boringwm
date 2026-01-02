@@ -97,22 +97,39 @@ fn handle_key(
     keycode: u8,
 ) {
     match keycode {
+        // Terminal
         keys::KEY_RETURN => {
             let _ = Command::new("kitty").spawn();
         }
+
+        // File manager
+        keys::KEY_T => {
+            let _ = Command::new("thunar").spawn();
+        }
+
+        // Browser
+        keys::KEY_B => {
+            let _ = Command::new("firefox").spawn();
+        }
+
+        // Close focused window
         keys::KEY_Q => {
             if let Some(&w) = state.windows.get(state.focused) {
                 close_window(conn, w);
             }
         }
+
+        // Focus navigation
         keys::KEY_J => {
             state.focus_next();
             focus(conn, state);
         }
+
         keys::KEY_K => {
             state.focus_prev();
             focus(conn, state);
         }
+
         _ => {}
     }
 
