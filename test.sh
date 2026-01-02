@@ -42,13 +42,18 @@ echo "==> Installing BoringWM to /usr/local/bin"
 sudo install -Dm755 target/release/boringwm /usr/local/bin/boringwm
 
 # --------------------------------------------------
-# Recommended desktop tools
+# Desktop tools
 # --------------------------------------------------
-echo "==> Installing recommended desktop tools"
-sudo apt install -y kitty picom feh
+echo "==> Installing desktop tools"
+sudo apt install -y \
+  kitty \
+  picom \
+  feh \
+  thunar \
+  firefox-esr
 
 # --------------------------------------------------
-# Wallpaper (automatic)
+# Wallpaper
 # --------------------------------------------------
 echo "==> Installing default wallpaper"
 if [ -f assets/wallpaper/boringwm-wallpaper.png ]; then
@@ -58,7 +63,39 @@ else
 fi
 
 # --------------------------------------------------
-# Autostart configuration
+# Picom configuration (safe, no GL)
+# --------------------------------------------------
+echo "==> Writing picom config"
+mkdir -p "$HOME/.config/picom"
+
+cat > "$HOME/.config/picom/picom.conf" << 'EOF'
+backend = "xrender";
+vsync = true;
+
+active-opacity   = 0.95;
+inactive-opacity = 0.95;
+frame-opacity    = 0.95;
+
+fading = true;
+fade-in-step  = 0.03;
+fade-out-step = 0.03;
+
+blur-method = "none";
+EOF
+
+# --------------------------------------------------
+# Kitty configuration (transparency)
+# --------------------------------------------------
+echo "==> Writing kitty config"
+mkdir -p "$HOME/.config/kitty"
+
+cat > "$HOME/.config/kitty/kitty.conf" << 'EOF'
+background_opacity 0.90
+enable_audio_bell no
+EOF
+
+# --------------------------------------------------
+# Autostart (safe)
 # --------------------------------------------------
 echo "==> Setting up autostart"
 mkdir -p "$HOME/.config/boringwm"
@@ -72,22 +109,22 @@ EOF
 chmod +x "$HOME/.config/boringwm/autostart.sh"
 
 # --------------------------------------------------
-# X11 start configuration
+# X11 start configuration (loop-safe)
 # --------------------------------------------------
 echo "==> Writing ~/.xinitrc"
 cat > "$HOME/.xinitrc" << 'EOF'
-exec boringwm
+exec boringwm || xterm
 EOF
 
 # --------------------------------------------------
-# Auto startx on tty1 (boring & optional)
+# Auto startx on tty1 (OPTIONAL, DEV UNSAFE)
 # --------------------------------------------------
 echo
 echo "==> Enable automatic startx on tty1? (y/N)"
 read -r answer
 
 if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
-  echo "==> Enabling auto-start X on tty1"
+  echo "==> Enabling auto-start X on tty1 (DEV MODE WARNING)"
 
   cat >> "$HOME/.bash_profile" << 'EOF'
 
@@ -98,7 +135,7 @@ fi
 EOF
 
 else
-  echo "==> Skipping auto-start X"
+  echo "==> Skipping auto-start X (recommended for dev)"
 fi
 
 # --------------------------------------------------
@@ -106,5 +143,4 @@ fi
 # --------------------------------------------------
 echo
 echo "==> Setup complete."
-echo "==> Log in on tty1 to start BoringWM automatically"
-echo "==> Or start manually with: startx"
+echo "==> Start with: startx"
