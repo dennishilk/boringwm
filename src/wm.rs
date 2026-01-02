@@ -1,191 +1,234 @@
+use anyhow::Context;
+use log::info;
+use std::process::Command;
 use x11rb::connection::Connection;
-use x11rb::protocol::xproto::*;
 use x11rb::protocol::Event;
+use x11rb::protocol::xproto::*;
+use x11rb::protocol::xproto::ConnectionExt;
 use x11rb::rust_connection::RustConnection;
 use x11rb::CURRENT_TIME;
 
 use crate::keys;
 use crate::layout;
+use crate::state::WmState;
 
-pub struct WindowManager {
-    pub conn: RustConnection,
-    pub screen_num: usize,
-    pub windows: Vec<Window>,
-    pub master_ratio: f32,
-}
+const BORDER_WIDTH: u32 = 2;
+const BORDER_FOCUSED: u32 = 0x88CCFF;
+const BORDER_NORMAL: u32 = 0x333333;
 
-impl WindowManager {
-    pub fn new(conn: RustConnection, screen_num: usize) -> Self {
-        Self {
-            conn,
-            screen_num,
-            windows: Vec::new(),
-            master_ratio: 0.6,
-        }
-    }
+pub fn run() -> anyhow::Result<()> {
+    let (conn, screen_num) = x11rb::connect(None).context("X11 connect failed")?;
+    let screen = &conn.setup().roots[screen_num];
+    let root = screen.root;
 
-    pub fn run(&mut self) -> anyhow::Result<()> {
-        let screen = &self.conn.setup().roots[self.screen_num];
-        let root = screen.root;
+    conn.change_window_attributes(
+        root,
+        &ChangeWindowAttributesAux::new().event_mask(
+            EventMask::SUBSTRUCTURE_REDIRECT
+                | EventMask::SUBSTRUCTURE_NOTIFY
+                | EventMask::KEY_PRESS,
+        ),
+    )?;
 
-        // Select events on root window
-        self.conn.change_window_attributes(
-            root,
-            &ChangeWindowAttributesAux::new().event_mask(
-                EventMask::SUBSTRUCTURE_REDIRECT
-                    | EventMask::SUBSTRUCTURE_NOTIFY
-                    | EventMask::KEY_PRESS,
-            ),
-        )?;
-        self.conn.flush()?;
+    // Autostart (user controlled)
+    let _ = Command::new("sh")
+        .arg("-c")
+        .arg("$HOME/.config/boringwm/autostart.sh")
+        .spawn();
 
-        // Grab keys
-        keys::grab_keys(&self.conn, root);
+    keys::grab_keys(&conn, root);
+    conn.flush()?;
 
-        log::info!("boringwm running");
+    info!("boringwm running");
 
-        loop {
-            let event = self.conn.wait_for_event()?;
-            self.handle_event(event, screen)?;
-        }
-    }
+    let mut state = WmState::new();
 
-    fn handle_event(
-        &mut self,
-        event: Event,
-        screen: &Screen,
-    ) -> anyhow::Result<()> {
+    loop {
+        let event = conn.wait_for_event()?;
         match event {
             Event::MapRequest(e) => {
-                self.on_map_request(e, screen)?;
+                let w = e.window;
+
+                if is_fullscreen(&conn, &screen, w) {
+                    let _ = conn.map_window(w);
+                    continue;
+                }
+
+                let _ = conn.change_window_attributes(
+                    w,
+                    &ChangeWindowAttributesAux::new()
+                        .border_pixel(BORDER_NORMAL)
+                        .event_mask(EventMask::FOCUS_CHANGE),
+                );
+
+                let _ = conn.configure_window(
+                    w,
+                    &ConfigureWindowAux::new().border_width(BORDER_WIDTH),
+                );
+
+                state.windows.push(w);
+                state.focused = state.windows.len() - 1;
+
+                let _ = conn.map_window(w);
+                focus(&conn, &state);
+                retile(&conn, &screen, &state);
             }
 
             Event::DestroyNotify(e) => {
-                self.on_destroy(e);
+                state.windows.retain(|&x| x != e.window);
+                state.focused = 0;
+                focus(&conn, &state);
+                retile(&conn, &screen, &state);
             }
 
             Event::KeyPress(e) => {
-                self.on_key_press(e, screen)?;
+                handle_key(&conn, &screen, &mut state, e.detail);
             }
 
             _ => {}
         }
-        Ok(())
     }
+}
 
-    fn on_map_request(
-        &mut self,
-        e: MapRequestEvent,
-        screen: &Screen,
-    ) -> anyhow::Result<()> {
-        let win = e.window;
-
-        // Add to managed windows
-        if !self.windows.contains(&win) {
-            self.windows.push(win);
+fn handle_key(
+    conn: &RustConnection,
+    screen: &Screen,
+    state: &mut WmState,
+    keycode: u8,
+) {
+    match keycode {
+        keys::KEY_RETURN => {
+            let _ = Command::new("kitty").spawn();
         }
-
-        self.conn.map_window(win)?;
-        self.relayout(screen);
-
-        self.conn.flush()?;
-        Ok(())
-    }
-
-    fn on_destroy(&mut self, e: DestroyNotifyEvent) {
-        self.windows.retain(|&w| w != e.window);
-    }
-
-    fn on_key_press(
-        &mut self,
-        e: KeyPressEvent,
-        screen: &Screen,
-    ) -> anyhow::Result<()> {
-        let keysym = keys::keycode_to_keysym(&self.conn, e.detail);
-
-        match keysym {
-            keys::KEY_TERMINAL => {
-                self.spawn("kitty");
+        keys::KEY_Q => {
+            if let Some(&w) = state.windows.get(state.focused) {
+                close_window(conn, w);
             }
-
-            keys::KEY_QUIT => {
-                self.close_focused();
-            }
-
-            keys::KEY_NEXT => {
-                self.focus_next();
-            }
-
-            keys::KEY_PREV => {
-                self.focus_prev();
-            }
-
-            _ => {}
         }
-
-        self.relayout(screen);
-        self.conn.flush()?;
-        Ok(())
+        keys::KEY_J => {
+            state.focus_next();
+            focus(conn, state);
+        }
+        keys::KEY_K => {
+            state.focus_prev();
+            focus(conn, state);
+        }
+        _ => {}
     }
 
-    fn relayout(&self, screen: &Screen) {
-        layout::tile(
-            &self.conn,
-            screen.width_in_pixels,
-            screen.height_in_pixels,
-            &self.windows,
-            self.master_ratio,
+    retile(conn, screen, state);
+}
+
+fn close_window(conn: &RustConnection, window: Window) {
+    let wm_protocols = conn
+        .intern_atom(false, b"WM_PROTOCOLS")
+        .unwrap()
+        .reply()
+        .unwrap()
+        .atom;
+
+    let wm_delete = conn
+        .intern_atom(false, b"WM_DELETE_WINDOW")
+        .unwrap()
+        .reply()
+        .unwrap()
+        .atom;
+
+    let event = ClientMessageEvent {
+        response_type: CLIENT_MESSAGE_EVENT,
+        format: 32,
+        sequence: 0,
+        window,
+        type_: wm_protocols,
+        data: ClientMessageData::from([wm_delete, CURRENT_TIME, 0, 0, 0]),
+    };
+
+    let _ = conn.send_event(false, window, EventMask::NO_EVENT, event);
+}
+
+fn focus(conn: &RustConnection, state: &WmState) {
+    for (i, &w) in state.windows.iter().enumerate() {
+        let color = if i == state.focused {
+            BORDER_FOCUSED
+        } else {
+            BORDER_NORMAL
+        };
+
+        let _ = conn.change_window_attributes(
+            w,
+            &ChangeWindowAttributesAux::new().border_pixel(color),
         );
     }
 
-    fn spawn(&self, cmd: &str) {
-        let _ = self.conn.spawn(cmd);
-    }
+    if let Some(&w) = state.windows.get(state.focused) {
+        let _ = conn.set_input_focus(
+            InputFocus::POINTER_ROOT,
+            w,
+            CURRENT_TIME,
+        );
 
-    fn close_focused(&self) {
-        if let Some(&win) = self.windows.last() {
-            let _ = self.conn.send_event(
-                false,
-                win,
-                EventMask::NO_EVENT,
-                ClientMessageEvent {
-                    response_type: CLIENT_MESSAGE_EVENT,
-                    format: 32,
-                    sequence: 0,
-                    window: win,
-                    type_: self
-                        .conn
-                        .intern_atom(false, b"WM_PROTOCOLS")
-                        .unwrap()
-                        .reply()
-                        .unwrap()
-                        .atom,
-                    data: ClientMessageData::from_data32([
-                        self.conn
-                            .intern_atom(false, b"WM_DELETE_WINDOW")
-                            .unwrap()
-                            .reply()
-                            .unwrap()
-                            .atom,
-                        CURRENT_TIME,
-                        0,
-                        0,
-                        0,
-                    ]),
-                },
-            );
+        let _ = conn.configure_window(
+            w,
+            &ConfigureWindowAux::new().stack_mode(StackMode::ABOVE),
+        );
+    }
+}
+
+fn retile(conn: &RustConnection, screen: &Screen, state: &WmState) {
+    layout::tile(
+        conn,
+        screen.width_in_pixels,
+        screen.height_in_pixels,
+        &state.windows,
+        state.master_ratio,
+    );
+    let _ = conn.flush();
+}
+
+fn is_fullscreen(
+    conn: &RustConnection,
+    screen: &Screen,
+    window: Window,
+) -> bool {
+    let net_wm_state = conn
+        .intern_atom(false, b"_NET_WM_STATE")
+        .unwrap()
+        .reply()
+        .unwrap()
+        .atom;
+
+    let net_wm_state_fs = conn
+        .intern_atom(false, b"_NET_WM_STATE_FULLSCREEN")
+        .unwrap()
+        .reply()
+        .unwrap()
+        .atom;
+
+    if let Ok(reply) = conn.get_property(
+        false,
+        window,
+        net_wm_state,
+        AtomEnum::ATOM,
+        0,
+        32,
+    ) {
+        if let Ok(prop) = reply.reply() {
+            if let Some(values) = prop.value32() {
+                let atoms: Vec<u32> = values.collect();
+                if atoms.contains(&net_wm_state_fs) {
+                    let _ = conn.configure_window(
+                        window,
+                        &ConfigureWindowAux::new()
+                            .x(Some(0))
+                            .y(Some(0))
+                            .width(Some(screen.width_in_pixels as u32))
+                            .height(Some(screen.height_in_pixels as u32))
+                            .border_width(0),
+                    );
+                    return true;
+                }
+            }
         }
     }
-
-    fn focus_next(&mut self) {
-        if self.windows.len() > 1 {
-            self.windows.rotate_left(1);
-        }
-    }
-
-    fn focus_prev(&mut self) {
-        if self.windows.len() > 1 {
-            self.windows.rotate_right(1);
-        }
-    }
+    false
 }
