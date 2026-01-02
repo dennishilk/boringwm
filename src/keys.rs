@@ -17,14 +17,23 @@ pub const KEY_K: u8 = 45;      // k;
 pub fn grab_keys(conn: &RustConnection, root: Window) {
     let keys = [KEY_RETURN, KEY_Q, KEY_J, KEY_K];
 
-    for keycode in keys {
-        let _ = conn.grab_key(
-            false,
-            root,
-            MOD,
-            keycode,
-            GrabMode::ASYNC,
-            GrabMode::ASYNC,
-        );
+    let mods = [
+        MOD,
+        MOD | ModMask::M2,
+        MOD | ModMask::LOCK,
+        MOD | ModMask::M2 | ModMask::LOCK,
+    ];
+
+    for &m in &mods {
+        for &keycode in &keys {
+            let _ = conn.grab_key(
+                false,
+                root,
+                m,
+                keycode,
+                GrabMode::ASYNC,
+                GrabMode::ASYNC,
+            );
+        }
     }
 }
