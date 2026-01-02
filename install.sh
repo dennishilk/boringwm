@@ -50,7 +50,8 @@ sudo apt install -y \
   picom \
   feh \
   thunar \
-  firefox-esr
+  firefox-esr \
+  rofi
 
 # --------------------------------------------------
 # Wallpaper
