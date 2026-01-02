@@ -4,13 +4,14 @@ use x11rb::rust_connection::RustConnection;
 
 pub const MOD: ModMask = ModMask::M4;
 
-// Hardcoded MVP keycodes (US layout)
-pub const KEY_RETURN: u8 = 36; // Enter
-pub const KEY_Q: u8 = 24;      // q
-pub const KEY_J: u8 = 44;      // j
-pub const KEY_K: u8 = 45;      // k
-pub const KEY_T: u8 = 28;      // t
-pub const KEY_B: u8 = 56;      // b
+// Keycodes (US layout)
+pub const KEY_RETURN: u8 = 36;
+pub const KEY_Q: u8 = 24;
+pub const KEY_J: u8 = 44;
+pub const KEY_K: u8 = 45;
+pub const KEY_T: u8 = 28;
+pub const KEY_B: u8 = 56;
+pub const KEY_D: u8 = 40;
 
 pub fn grab_keys(conn: &RustConnection, root: Window) {
     let keys = [
@@ -20,6 +21,7 @@ pub fn grab_keys(conn: &RustConnection, root: Window) {
         KEY_K,
         KEY_T,
         KEY_B,
+        KEY_D,
     ];
 
     let mods = [
