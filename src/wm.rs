@@ -112,6 +112,13 @@ fn handle_key(
             let _ = Command::new("firefox").spawn();
         }
 
+        // App launcher (rofi)
+        keys::KEY_D => {
+            let _ = Command::new("rofi")
+                .args(["-show", "drun"])
+                .spawn();
+        }
+
         // Close focused window
         keys::KEY_Q => {
             if let Some(&w) = state.windows.get(state.focused) {
