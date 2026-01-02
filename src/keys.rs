@@ -3,6 +3,10 @@ use x11rb::protocol::xproto::ConnectionExt;
 use x11rb::rust_connection::RustConnection;
 
 pub const MOD: ModMask = ModMask::M4;
+pub const IGNORE_MODS: ModMask = ModMask::M2 | ModMask::LOCK;
+// M2   = NumLock
+// LOCK = CapsLock
+
 
 // Hardcoded MVP keycodes (US layout, works in Xephyr & real HW)
 pub const KEY_RETURN: u8 = 36; // Enter
