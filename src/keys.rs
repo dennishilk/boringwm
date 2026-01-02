@@ -3,20 +3,24 @@ use x11rb::protocol::xproto::ConnectionExt;
 use x11rb::rust_connection::RustConnection;
 
 pub const MOD: ModMask = ModMask::M4;
-fn ignore_mods() -> ModMask {
-    ModMask::M2 | ModMask::LOCK
-}
 
-
-
-// Hardcoded MVP keycodes (US layout, works in Xephyr & real HW)
+// Hardcoded MVP keycodes (US layout)
 pub const KEY_RETURN: u8 = 36; // Enter
 pub const KEY_Q: u8 = 24;      // q
 pub const KEY_J: u8 = 44;      // j
-pub const KEY_K: u8 = 45;      // k;
+pub const KEY_K: u8 = 45;      // k
+pub const KEY_T: u8 = 28;      // t
+pub const KEY_B: u8 = 56;      // b
 
 pub fn grab_keys(conn: &RustConnection, root: Window) {
-    let keys = [KEY_RETURN, KEY_Q, KEY_J, KEY_K];
+    let keys = [
+        KEY_RETURN,
+        KEY_Q,
+        KEY_J,
+        KEY_K,
+        KEY_T,
+        KEY_B,
+    ];
 
     let mods = [
         MOD,
