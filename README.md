@@ -32,6 +32,10 @@ It is intentionally **boring by design**: predictable behavior, minimal features
 BoringWM does **not** aim to be the most configurable or flashy window manager.  
 It aims to be **correct**, **boring**, and **reliable**.
 
+# Branch Concept
+
+- `boringwm/` – stable main branch
+- `boringwm-dev/` – development branch for new features and experiments
 ---
 
 ## 🧪 Development vs Target Platforms
@@ -177,6 +181,10 @@ BoringWM möchte **nicht** der konfigurierbarste oder spektakulärste
 Window-Manager sein.  
 Er soll **korrekt**, **langweilig** und **zuverlässig** sein.
 
+# Branch-Konzept
+
+- `boringwm/` – stabiler Hauptzweig
+- `boringwm-dev/` – neue Features & Tests
 ---
 
 ## 🧪 Entwicklungs- vs. Zielplattformen
