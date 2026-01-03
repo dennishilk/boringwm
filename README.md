@@ -78,6 +78,7 @@ Configuration and extensibility may be added later, but never at the cost of sim
 | Mod + Enter | Open terminal (kitty) |
 | Mod + T | Open file manager (thunar) |
 | Mod + B | Open browser (firefox) |
+| Mod + D | Open File browser (rofi) |
 | Mod + Q | Close window |
 | Mod + J | Focus next window |
 | Mod + K | Focus previous window |
@@ -224,6 +225,7 @@ aber niemals auf Kosten von Einfachheit oder Korrektheit.
 | Mod + Enter | Terminal öffnen (kitty) |
 | Mod + T | Öffne Dateimanager (thunar) |
 | Mod + B | Offne Browser (firefox) |
+| Mod + D | Open Dateibrowser (rofi) |
 | Mod + Q | Fenster schließen |
 | Mod + J | Nächstes Fenster fokussieren |
 | Mod + K | Vorheriges Fenster fokussieren |
