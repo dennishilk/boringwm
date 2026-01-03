@@ -32,10 +32,6 @@ It is intentionally **boring by design**: predictable behavior, minimal features
 BoringWM does **not** aim to be the most configurable or flashy window manager.  
 It aims to be **correct**, **boring**, and **reliable**.
 
-# Branch Concept
-
-- `boringwm/` – stable main branch
-- `boringwm-dev/` – development branch for new features and experiments
 ---
 
 ## 🧪 Development vs Target Platforms
@@ -48,7 +44,12 @@ It aims to be **correct**, **boring**, and **reliable**.
 - Expected to work on Ubuntu, Linux Mint, Arch Linux and similar distributions
 
 If it runs correctly on Debian Stable, it is expected to run correctly on most other Linux systems.
+---
+Branch Concept
 
+- `boringwm/` – stable main branch
+- `boringwm-dev/` – development branch for new features and experiments
+- 📓 [View Changelog](CHANGELOG.md)
 ---
 
 ## 🧠 Design Philosophy
@@ -181,10 +182,6 @@ BoringWM möchte **nicht** der konfigurierbarste oder spektakulärste
 Window-Manager sein.  
 Er soll **korrekt**, **langweilig** und **zuverlässig** sein.
 
-# Branch-Konzept
-
-- `boringwm/` – stabiler Hauptzweig
-- `boringwm-dev/` – neue Features & Tests
 ---
 
 ## 🧪 Entwicklungs- vs. Zielplattformen
@@ -198,8 +195,14 @@ Er soll **korrekt**, **langweilig** und **zuverlässig** sein.
 
 Wenn BoringWM auf Debian Stable korrekt läuft,  
 sollte er auf den meisten anderen Linux-Systemen ebenfalls funktionieren.
-
 ---
+Branch Concept
+
+- `boringwm/` – stabiler Hauptzweig (main)
+- `boringwm-dev/` – Entwicklungszweig für neue Features und Experimente
+- 📓 [Änderungsverlauf](CHANGELOG.md)
+---
+
 
 ## 🧠 Design-Philosophie
 
