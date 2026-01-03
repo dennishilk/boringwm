@@ -1,10 +1,17 @@
 use x11rb::connection::Connection;
-use x11rb::keysym::{Keysym, XK_Return, XK_b, XK_d, XK_j, XK_k, XK_q, XK_t};
 use x11rb::protocol::xproto::ConnectionExt;
 use x11rb::protocol::xproto::*;
 use x11rb::rust_connection::RustConnection;
 
 pub const MOD: ModMask = ModMask::M4;
+
+pub const XK_Return: Keysym = 0xFF0D;
+pub const XK_b: Keysym = 0x0062;
+pub const XK_d: Keysym = 0x0064;
+pub const XK_j: Keysym = 0x006A;
+pub const XK_k: Keysym = 0x006B;
+pub const XK_q: Keysym = 0x0071;
+pub const XK_t: Keysym = 0x0074;
 
 pub const KEYSYM_AUDIO_LOWER_VOLUME: Keysym = 0x1008FF11;
 pub const KEYSYM_AUDIO_MUTE: Keysym = 0x1008FF12;
