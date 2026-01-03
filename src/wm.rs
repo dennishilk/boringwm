@@ -205,6 +205,7 @@ fn retile(conn: &RustConnection, screen: &Screen, state: &WmState) {
         screen.height_in_pixels,
         &state.windows,
         state.master_ratio,
+        BORDER_WIDTH,
     );
     let _ = conn.flush();
 }
