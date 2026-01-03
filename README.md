@@ -224,8 +224,8 @@ aber niemals auf Kosten von Einfachheit oder Korrektheit.
 |------|--------|
 | Mod + Enter | Terminal öffnen (kitty) |
 | Mod + T | Öffne Dateimanager (thunar) |
-| Mod + B | Offne Browser (firefox) |
-| Mod + D | Open Dateibrowser (rofi) |
+| Mod + B | Öffne Browser (firefox) |
+| Mod + D | Öffne Dateibrowser (rofi) |
 | Mod + Q | Fenster schließen |
 | Mod + J | Nächstes Fenster fokussieren |
 | Mod + K | Vorheriges Fenster fokussieren |
