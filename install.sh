@@ -17,6 +17,60 @@ sudo apt install -y \
   build-essential
 
 # --------------------------------------------------
+# Zsh + plugins
+# --------------------------------------------------
+echo "==> Installing zsh and shell enhancements"
+sudo apt install -y zsh
+
+mkdir -p "$HOME/.zsh"
+if [ ! -d "$HOME/.zsh/zsh-autosuggestions" ]; then
+  git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.zsh/zsh-autosuggestions"
+fi
+
+if [ ! -d "$HOME/.zsh/zsh-syntax-highlighting" ]; then
+  git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.zsh/zsh-syntax-highlighting"
+fi
+
+echo "==> Writing ~/.zshrc"
+cat > "$HOME/.zshrc" << 'EOF'
+# Plugins
+source "$HOME/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh"
+source "$HOME/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+
+# Basic usability
+autoload -Uz compinit && compinit
+setopt HIST_IGNORE_ALL_DUPS
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+EOF
+
+if command -v chsh >/dev/null 2>&1 && command -v zsh >/dev/null 2>&1; then
+  echo "==> Setting zsh as default shell"
+  chsh -s "$(command -v zsh)" "$USER"
+else
+  echo "==> chsh or zsh not found, skipping default shell change"
+fi
+
+# NetworkManager (nmcli) + audio + notifications
+echo "==> Installing network, audio, and notification tools"
+sudo apt install -y \
+  network-manager \
+  network-manager-gnome \
+  pulseaudio-utils \
+  pipewire-pulse \
+  libnotify-bin \
+  dunst \
+  volumeicon-alsa
+
+# Guard: Only enable NetworkManager if systemctl exists
+if command -v systemctl &>/dev/null 2>&1; then
+  sudo systemctl enable --now NetworkManager || true
+else
+  echo "==> systemctl not found, skipping NetworkManager enable"
+fi
+
+# --------------------------------------------------
 # Rust (user-local)
 # --------------------------------------------------
 if ! command -v cargo >/dev/null 2>&1; then
@@ -105,6 +159,13 @@ cat > "$HOME/.config/boringwm/autostart.sh" << 'EOF'
 #!/bin/sh
 feh --bg-fill "$HOME/.wallpaper" &
 picom &
+if command -v nm-applet >/dev/null 2>&1; then
+  nm-applet &
+fi
+
+if command -v volumeicon >/dev/null 2>&1; then
+  volumeicon &
+fi
 EOF
 
 chmod +x "$HOME/.config/boringwm/autostart.sh"

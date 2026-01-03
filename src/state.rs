@@ -68,4 +68,15 @@ mod tests {
 
         assert_eq!(state.focused, 2);
     }
+
+    #[test]
+    fn focus_prev_empty_windows_is_stable() {
+        let mut state = WmState::new();
+        state.focused = 0;
+
+        state.focus_prev();
+
+        assert_eq!(state.focused, 0);
+        assert!(state.windows.is_empty());
+    }
 }
