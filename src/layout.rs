@@ -1,5 +1,5 @@
-use x11rb::protocol::xproto::*;
 use x11rb::protocol::xproto::ConnectionExt;
+use x11rb::protocol::xproto::*;
 use x11rb::rust_connection::RustConnection;
 
 // Fixed boring gaps (pixels)
@@ -38,8 +38,7 @@ pub fn tile(
     let stack_width = sw - master_width;
 
     let stack_count = windows.len() - 1;
-    let stack_height =
-        (sh - (stack_count as i32 + 1) * GAP) / stack_count as i32;
+    let stack_height = (sh - (stack_count as i32 + 1) * GAP) / stack_count as i32;
 
     // Master window
     let _ = conn.configure_window(

@@ -36,7 +36,8 @@ pub fn run() -> anyhow::Result<()> {
         .arg("$HOME/.config/boringwm/autostart.sh")
         .spawn();
 
-    keys::grab_keys(&conn, root);
+    let keybindings = keys::keybindings(&conn);
+    keys::grab_keys(&conn, root, &keybindings);
     let multimedia_keycodes = keys::multimedia_keycodes(&conn);
     keys::grab_multimedia_keys(&conn, root, &multimedia_keycodes);
     conn.flush()?;
@@ -82,7 +83,13 @@ pub fn run() -> anyhow::Result<()> {
             }
 
             Event::KeyPress(e) => {
-                handle_key(&conn, &mut state, &multimedia_keycodes, e.detail);
+                handle_key(
+                    &conn,
+                    &mut state,
+                    &keybindings,
+                    &multimedia_keycodes,
+                    e.detail,
+                );
             }
 
             Event::FocusIn(e) => {
@@ -102,51 +109,47 @@ pub fn run() -> anyhow::Result<()> {
 fn handle_key(
     conn: &RustConnection,
     state: &mut WmState,
+    bindings: &keys::Keybindings,
     multimedia: &keys::MultimediaKeycodes,
     keycode: u8,
 ) {
     match keycode {
         // Terminal
-        keys::KEY_RETURN => {
+        _ if bindings.terminal.contains(&keycode) => {
             let _ = Command::new("kitty").spawn();
         }
 
         // File manager
-        keys::KEY_T => {
+        _ if bindings.file_manager.contains(&keycode) => {
             let _ = Command::new("thunar").spawn();
         }
 
         // Browser
-        keys::KEY_B => {
+        _ if bindings.browser.contains(&keycode) => {
             let _ = Command::new("firefox").spawn();
         }
 
         // App launcher (rofi)
-        keys::KEY_D => {
+        _ if bindings.launcher.contains(&keycode) => {
             let _ = Command::new("rofi")
-                .args([
-                    "-show",
-                    "drun",
-                    "-modi",
-                    "drun,wifi:nmcli rofi wifi-menu",
-                ])
+                .args(["-show", "drun", "-modi", "drun,wifi:nmcli rofi wifi-menu"])
                 .spawn();
         }
 
         // Close focused window
-        keys::KEY_Q => {
+        _ if bindings.close.contains(&keycode) => {
             if let Some(&w) = state.windows.get(state.focused) {
                 close_window(conn, w);
             }
         }
 
         // Focus navigation
-        keys::KEY_J => {
+        _ if bindings.focus_next.contains(&keycode) => {
             state.focus_next();
             focus(conn, state);
         }
 
-        keys::KEY_K => {
+        _ if bindings.focus_prev.contains(&keycode) => {
             state.focus_prev();
             focus(conn, state);
         }
@@ -287,7 +290,8 @@ fn close_window(conn: &RustConnection, window: Window) {
     let supports_delete = match (wm_protocols, wm_delete) {
         (Some(wm_protocols), Some(wm_delete)) => {
             let mut supported = false;
-            if let Ok(cookie) = conn.get_property(false, window, wm_protocols, AtomEnum::ATOM, 0, 32)
+            if let Ok(cookie) =
+                conn.get_property(false, window, wm_protocols, AtomEnum::ATOM, 0, 32)
             {
                 if let Ok(prop) = cookie.reply() {
                     if let Some(mut values) = prop.value32() {
