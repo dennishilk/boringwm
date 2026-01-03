@@ -114,8 +114,7 @@ fn handle_key(
 
         // App launcher (rofi)
         keys::KEY_D => {
-            let _ = Command::new("rofi")
-                .args(["-show", "drun"])
+            let _ = Command::new("boringwm-rofi")
                 .spawn();
         }
 

@@ -1,0 +1,40 @@
+#!/bin/sh
+set -e
+
+if ! command -v nmcli >/dev/null 2>&1; then
+  rofi -e "NetworkManager (nmcli) not found."
+  exit 1
+fi
+
+wifi_state="$(nmcli -t -f WIFI general status | head -n1)"
+if [ "$wifi_state" = "enabled" ]; then
+  toggle_wifi="Disable Wi-Fi"
+else
+  toggle_wifi="Enable Wi-Fi"
+fi
+
+networks="$(
+  nmcli -t -f IN-USE,SSID dev wifi \
+    | awk -F: 'NF>=2 && $2 != "" {if ($1 == "*") print "✓ " $2; else print $2}' \
+    | sort -u
+)"
+
+menu="$(printf "%s\n%s" "$toggle_wifi" "$networks")"
+choice="$(printf "%s\n" "$menu" | rofi -dmenu -i -p "Network")"
+
+if [ -z "$choice" ]; then
+  exit 0
+fi
+
+case "$choice" in
+  "Enable Wi-Fi")
+    nmcli radio wifi on
+    ;;
+  "Disable Wi-Fi")
+    nmcli radio wifi off
+    ;;
+  *)
+    ssid="$(printf "%s" "$choice" | sed 's/^✓ //')"
+    nmcli dev wifi connect "$ssid"
+    ;;
+esac
