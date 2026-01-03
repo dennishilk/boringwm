@@ -2,9 +2,8 @@ use x11rb::protocol::xproto::*;
 use x11rb::protocol::xproto::ConnectionExt;
 use x11rb::rust_connection::RustConnection;
 
-// Fixed boring gaps and borders (pixels)
+// Fixed boring gaps (pixels)
 const GAP: i32 = 8;
-const BORDER_WIDTH: u32 = 1;
 
 pub fn tile(
     conn: &RustConnection,
@@ -12,6 +11,7 @@ pub fn tile(
     screen_height: u16,
     windows: &[Window],
     master_ratio: f32,
+    border_width: u32,
 ) {
     if windows.is_empty() {
         return;
@@ -29,7 +29,7 @@ pub fn tile(
                 .y(Some(GAP))
                 .width(Some((sw - 2 * GAP) as u32))
                 .height(Some((sh - 2 * GAP) as u32))
-                .border_width(Some(BORDER_WIDTH)),
+                .border_width(Some(border_width)),
         );
         return;
     }
@@ -49,7 +49,7 @@ pub fn tile(
             .y(Some(GAP))
             .width(Some((master_width - 2 * GAP) as u32))
             .height(Some((sh - 2 * GAP) as u32))
-            .border_width(Some(BORDER_WIDTH)),
+            .border_width(Some(border_width)),
     );
 
     // Stack windows
@@ -63,7 +63,7 @@ pub fn tile(
                 .y(Some(y))
                 .width(Some((stack_width - 2 * GAP) as u32))
                 .height(Some(stack_height as u32))
-                .border_width(Some(BORDER_WIDTH)),
+                .border_width(Some(border_width)),
         );
     }
 }
