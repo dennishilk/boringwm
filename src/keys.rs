@@ -1,17 +1,16 @@
 use x11rb::connection::Connection;
-use x11rb::protocol::xproto::ConnectionExt;
-use x11rb::protocol::xproto::*;
+use x11rb::protocol::xproto::{ConnectionExt, GrabMode, Keysym, ModMask, Window};
 use x11rb::rust_connection::RustConnection;
 
 pub const MOD: ModMask = ModMask::M4;
 
-pub const XK_Return: Keysym = 0xFF0D;
-pub const XK_b: Keysym = 0x0062;
-pub const XK_d: Keysym = 0x0064;
-pub const XK_j: Keysym = 0x006A;
-pub const XK_k: Keysym = 0x006B;
-pub const XK_q: Keysym = 0x0071;
-pub const XK_t: Keysym = 0x0074;
+pub const XK_RETURN: Keysym = 0xFF0D;
+pub const XK_B: Keysym = 0x0062;
+pub const XK_D: Keysym = 0x0064;
+pub const XK_J: Keysym = 0x006A;
+pub const XK_K: Keysym = 0x006B;
+pub const XK_Q: Keysym = 0x0071;
+pub const XK_T: Keysym = 0x0074;
 
 pub const KEYSYM_AUDIO_LOWER_VOLUME: Keysym = 0x1008FF11;
 pub const KEYSYM_AUDIO_MUTE: Keysym = 0x1008FF12;
@@ -92,13 +91,13 @@ pub fn multimedia_keycodes(conn: &RustConnection) -> MultimediaKeycodes {
 
 pub fn keybindings(conn: &RustConnection) -> Keybindings {
     Keybindings {
-        terminal: keycodes_for_keysym(conn, XK_Return),
-        close: keycodes_for_keysym(conn, XK_q),
-        focus_next: keycodes_for_keysym(conn, XK_j),
-        focus_prev: keycodes_for_keysym(conn, XK_k),
-        file_manager: keycodes_for_keysym(conn, XK_t),
-        browser: keycodes_for_keysym(conn, XK_b),
-        launcher: keycodes_for_keysym(conn, XK_d),
+        terminal: keycodes_for_keysym(conn, XK_RETURN),
+        close: keycodes_for_keysym(conn, XK_Q),
+        focus_next: keycodes_for_keysym(conn, XK_J),
+        focus_prev: keycodes_for_keysym(conn, XK_K),
+        file_manager: keycodes_for_keysym(conn, XK_T),
+        browser: keycodes_for_keysym(conn, XK_B),
+        launcher: keycodes_for_keysym(conn, XK_D),
     }
 }
 
