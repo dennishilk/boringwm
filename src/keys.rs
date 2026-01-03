@@ -1,3 +1,4 @@
+use x11rb::connection::Connection;
 use x11rb::protocol::xproto::ConnectionExt;
 use x11rb::protocol::xproto::*;
 use x11rb::rust_connection::RustConnection;
@@ -43,7 +44,7 @@ pub fn grab_keys(conn: &RustConnection, root: Window) {
 
 pub fn grab_multimedia_keys(conn: &RustConnection, root: Window, multimedia: &MultimediaKeycodes) {
     let mods = [
-        ModMask::empty(),
+        ModMask::default(),
         ModMask::M2,
         ModMask::LOCK,
         ModMask::M2 | ModMask::LOCK,

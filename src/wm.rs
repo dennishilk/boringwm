@@ -290,7 +290,7 @@ fn close_window(conn: &RustConnection, window: Window) {
             if let Ok(cookie) = conn.get_property(false, window, wm_protocols, AtomEnum::ATOM, 0, 32)
             {
                 if let Ok(prop) = cookie.reply() {
-                    if let Some(values) = prop.value32() {
+                    if let Some(mut values) = prop.value32() {
                         supported = values.any(|atom| atom == wm_delete);
                     }
                 }
