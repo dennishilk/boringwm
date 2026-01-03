@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+choice="$(
+  printf "Apps\nNetwork Manager\n" | rofi -dmenu -i -p "BoringWM"
+)"
+
+case "$choice" in
+  "Apps")
+    rofi -show drun
+    ;;
+  "Network Manager")
+    boringwm-networkmanager
+    ;;
+  *)
+    exit 0
+    ;;
+esac

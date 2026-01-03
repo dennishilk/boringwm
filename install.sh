@@ -17,6 +17,18 @@ sudo apt install -y \
   build-essential
 
 # --------------------------------------------------
+# Audio
+# --------------------------------------------------
+echo "==> Installing audio packages"
+sudo apt install -y \
+  pipewire \
+  pipewire-audio \
+  pipewire-pulse \
+  wireplumber \
+  alsa-utils \
+  pavucontrol
+
+# --------------------------------------------------
 # Rust (user-local)
 # --------------------------------------------------
 if ! command -v cargo >/dev/null 2>&1; then
@@ -51,7 +63,15 @@ sudo apt install -y \
   feh \
   thunar \
   firefox-esr \
-  rofi
+  rofi \
+  network-manager
+
+# --------------------------------------------------
+# Rofi scripts
+# --------------------------------------------------
+echo "==> Installing BoringWM rofi helpers"
+sudo install -Dm755 assets/scripts/boringwm-rofi /usr/local/bin/boringwm-rofi
+sudo install -Dm755 assets/scripts/boringwm-networkmanager /usr/local/bin/boringwm-networkmanager
 
 # --------------------------------------------------
 # Wallpaper
