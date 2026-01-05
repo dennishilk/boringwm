@@ -58,10 +58,7 @@ pub fn run() -> anyhow::Result<()> {
                     }
                 }
 
-                if is_fullscreen(&conn, &screen, w) {
-                    let _ = conn.map_window(w);
-                    continue;
-                }
+                let is_fullscreen_window = is_fullscreen(&conn, &screen, w);
 
                 let _ = conn.change_window_attributes(
                     w,
@@ -70,8 +67,12 @@ pub fn run() -> anyhow::Result<()> {
                         .event_mask(EventMask::FOCUS_CHANGE),
                 );
 
-                let _ =
-                    conn.configure_window(w, &ConfigureWindowAux::new().border_width(BORDER_WIDTH));
+                if !is_fullscreen_window {
+                    let _ = conn.configure_window(
+                        w,
+                        &ConfigureWindowAux::new().border_width(BORDER_WIDTH),
+                    );
+                }
 
                 if !state.windows.contains(&w) {
                     state.windows.push(w);
@@ -80,7 +81,9 @@ pub fn run() -> anyhow::Result<()> {
 
                 let _ = conn.map_window(w);
                 focus(&conn, &state);
-                retile(&conn, &screen, &state);
+                if !is_fullscreen_window {
+                    retile(&conn, &screen, &state);
+                }
             }
 
             Event::DestroyNotify(e) => {
