@@ -29,6 +29,15 @@ else
   toggle_wifi="Wi-Fi: Enable"
 fi
 
+wwan_state="$(nmcli -t -f WWAN general status | head -n1)"
+if [ "$wwan_state" = "enabled" ]; then
+  toggle_wwan="WWAN: Disable"
+elif [ "$wwan_state" = "disabled" ]; then
+  toggle_wwan="WWAN: Enable"
+else
+  toggle_wwan=""
+fi
+
 active_connections="$(
   nmcli -t -f NAME,TYPE,DEVICE connection show --active \
     | awk -F: 'NF>=2 && $1 != "" {print "Disconnect: " $1 " [" $2 "]"}'
@@ -45,9 +54,10 @@ wifi_networks="$(
     | sort -u
 )"
 
-menu="$(printf "%s\n%s\n%s\n%s\n%s\n" \
+menu="$(printf "%s\n%s\n%s\n%s\n%s\n%s\n" \
   "$toggle_networking" \
   "$toggle_wifi" \
+  "$toggle_wwan" \
   "$active_connections" \
   "$inactive_connections" \
   "$wifi_networks" \
@@ -79,6 +89,12 @@ case "$choice" in
     ;;
   "Wi-Fi: Disable")
     nmcli radio wifi off
+    ;;
+  "WWAN: Enable")
+    nmcli radio wwan on
+    ;;
+  "WWAN: Disable")
+    nmcli radio wwan off
     ;;
   "Disconnect: "*)
     connection_name="$(printf "%s" "$choice" | sed 's/^Disconnect: //; s/ \[.*\]$//')"
