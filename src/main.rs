@@ -1,8 +1,8 @@
-mod wm;
+mod keys;
+mod layout;
 mod log;
 mod state;
-mod layout;
-mod keys;
+mod wm;
 
 fn main() -> anyhow::Result<()> {
     log::init();

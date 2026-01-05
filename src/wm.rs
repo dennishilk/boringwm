@@ -2,9 +2,9 @@ use anyhow::Context;
 use log::info;
 use std::process::Command;
 use x11rb::connection::Connection;
-use x11rb::protocol::Event;
-use x11rb::protocol::xproto::*;
 use x11rb::protocol::xproto::ConnectionExt;
+use x11rb::protocol::xproto::*;
+use x11rb::protocol::Event;
 use x11rb::rust_connection::RustConnection;
 use x11rb::CURRENT_TIME;
 
@@ -12,9 +12,9 @@ use crate::keys;
 use crate::layout;
 use crate::state::WmState;
 
-const BORDER_WIDTH: u32 = 2;
-const BORDER_FOCUSED: u32 = 0x88CCFF;
-const BORDER_NORMAL: u32 = 0x333333;
+const BORDER_WIDTH: u32 = 3;
+const BORDER_FOCUSED: u32 = 0x88C0D0;
+const BORDER_NORMAL: u32 = 0x2E3440;
 
 pub fn run() -> anyhow::Result<()> {
     let (conn, screen_num) = x11rb::connect(None).context("X11 connect failed")?;
@@ -61,10 +61,8 @@ pub fn run() -> anyhow::Result<()> {
                         .event_mask(EventMask::FOCUS_CHANGE),
                 );
 
-                let _ = conn.configure_window(
-                    w,
-                    &ConfigureWindowAux::new().border_width(BORDER_WIDTH),
-                );
+                let _ =
+                    conn.configure_window(w, &ConfigureWindowAux::new().border_width(BORDER_WIDTH));
 
                 state.windows.push(w);
                 state.focused = state.windows.len() - 1;
@@ -89,12 +87,7 @@ pub fn run() -> anyhow::Result<()> {
     }
 }
 
-fn handle_key(
-    conn: &RustConnection,
-    screen: &Screen,
-    state: &mut WmState,
-    keycode: u8,
-) {
+fn handle_key(conn: &RustConnection, screen: &Screen, state: &mut WmState, keycode: u8) {
     match keycode {
         // Terminal
         keys::KEY_RETURN => {
@@ -113,8 +106,7 @@ fn handle_key(
 
         // App launcher (rofi)
         keys::KEY_D => {
-            let _ = Command::new("boringwm-rofi")
-                .spawn();
+            let _ = Command::new("boringwm-rofi").spawn();
         }
 
         // Close focused window
@@ -176,23 +168,14 @@ fn focus(conn: &RustConnection, state: &WmState) {
             BORDER_NORMAL
         };
 
-        let _ = conn.change_window_attributes(
-            w,
-            &ChangeWindowAttributesAux::new().border_pixel(color),
-        );
+        let _ =
+            conn.change_window_attributes(w, &ChangeWindowAttributesAux::new().border_pixel(color));
     }
 
     if let Some(&w) = state.windows.get(state.focused) {
-        let _ = conn.set_input_focus(
-            InputFocus::POINTER_ROOT,
-            w,
-            CURRENT_TIME,
-        );
+        let _ = conn.set_input_focus(InputFocus::POINTER_ROOT, w, CURRENT_TIME);
 
-        let _ = conn.configure_window(
-            w,
-            &ConfigureWindowAux::new().stack_mode(StackMode::ABOVE),
-        );
+        let _ = conn.configure_window(w, &ConfigureWindowAux::new().stack_mode(StackMode::ABOVE));
     }
 }
 
@@ -208,11 +191,7 @@ fn retile(conn: &RustConnection, screen: &Screen, state: &WmState) {
     let _ = conn.flush();
 }
 
-fn is_fullscreen(
-    conn: &RustConnection,
-    screen: &Screen,
-    window: Window,
-) -> bool {
+fn is_fullscreen(conn: &RustConnection, screen: &Screen, window: Window) -> bool {
     let net_wm_state = conn
         .intern_atom(false, b"_NET_WM_STATE")
         .unwrap()
@@ -227,14 +206,7 @@ fn is_fullscreen(
         .unwrap()
         .atom;
 
-    if let Ok(reply) = conn.get_property(
-        false,
-        window,
-        net_wm_state,
-        AtomEnum::ATOM,
-        0,
-        32,
-    ) {
+    if let Ok(reply) = conn.get_property(false, window, net_wm_state, AtomEnum::ATOM, 0, 32) {
         if let Ok(prop) = reply.reply() {
             if let Some(values) = prop.value32() {
                 let atoms: Vec<u32> = values.collect();
