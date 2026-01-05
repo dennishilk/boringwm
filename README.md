@@ -47,8 +47,8 @@ If it runs correctly on Debian Stable, it is expected to run correctly on most o
 ---
 Branch Concept
 
-- `boringwm/` – stable main branch
-- `boringwm-dev/` – development branch for new features and experiments
+- `main` – stable main branch
+- `dev` – development branch for new features and experiments
 - 📓 [View Changelog](CHANGELOG.md)
 ---
 
@@ -198,8 +198,8 @@ sollte er auf den meisten anderen Linux-Systemen ebenfalls funktionieren.
 ---
 Branch Concept
 
-- `boringwm/` – stabiler Hauptzweig (main)
-- `boringwm-dev/` – Entwicklungszweig für neue Features und Experimente
+- `main` – stabiler Hauptzweig (main)
+- `dev` – Entwicklungszweig für neue Features und Experimente
 - 📓 [Änderungsverlauf](CHANGELOG.md)
 ---
 
