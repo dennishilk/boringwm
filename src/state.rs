@@ -70,6 +70,17 @@ mod tests {
     }
 
     #[test]
+    fn focus_prev_empty_windows_is_stable() {
+        let mut state = WmState::new();
+        state.focused = 0;
+
+        state.focus_prev();
+
+        assert_eq!(state.focused, 0);
+        assert!(state.windows.is_empty());
+    }
+
+    #[test]
     fn focus_next_wraps_from_last_to_first() {
         let mut state = WmState::new();
         state.windows = vec![1, 2, 3];
