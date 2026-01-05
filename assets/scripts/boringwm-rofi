@@ -2,7 +2,7 @@
 set -e
 
 rofi -show combi \
-  -modi "combi,drun,network:boringwm-networkmanager --rofi" \
-  -combi-modi "drun,network" \
+  -modi "combi" \
+  -combi-modi "drun,network:boringwm-networkmanager --rofi" \
   -combi-hide-mode-prefix \
   -p "BoringWM"
