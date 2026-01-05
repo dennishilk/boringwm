@@ -1,6 +1,9 @@
 use anyhow::Context;
-use log::info;
+use log::{info, warn};
+use std::path::PathBuf;
 use std::process::Command;
+use std::{env, fs};
+use std::os::unix::fs::PermissionsExt;
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto::ConnectionExt;
 use x11rb::protocol::xproto::*;
@@ -31,10 +34,7 @@ pub fn run() -> anyhow::Result<()> {
     )?;
 
     // Autostart (user controlled)
-    let _ = Command::new("sh")
-        .arg("-c")
-        .arg("$HOME/.config/boringwm/autostart.sh")
-        .spawn();
+    run_autostart();
 
     keys::grab_keys(&conn, root);
     conn.flush()?;
@@ -48,6 +48,15 @@ pub fn run() -> anyhow::Result<()> {
         match event {
             Event::MapRequest(e) => {
                 let w = e.window;
+
+                if let Ok(attrs) = conn.get_window_attributes(w) {
+                    if let Ok(reply) = attrs.reply() {
+                        if reply.override_redirect {
+                            let _ = conn.map_window(w);
+                            continue;
+                        }
+                    }
+                }
 
                 if is_fullscreen(&conn, &screen, w) {
                     let _ = conn.map_window(w);
@@ -64,8 +73,10 @@ pub fn run() -> anyhow::Result<()> {
                 let _ =
                     conn.configure_window(w, &ConfigureWindowAux::new().border_width(BORDER_WIDTH));
 
-                state.windows.push(w);
-                state.focused = state.windows.len() - 1;
+                if !state.windows.contains(&w) {
+                    state.windows.push(w);
+                }
+                state.focused = state.windows.len().saturating_sub(1);
 
                 let _ = conn.map_window(w);
                 focus(&conn, &state);
@@ -76,6 +87,26 @@ pub fn run() -> anyhow::Result<()> {
                 state.remove_window(e.window);
                 focus(&conn, &state);
                 retile(&conn, &screen, &state);
+            }
+
+            Event::UnmapNotify(e) => {
+                state.remove_window(e.window);
+                focus(&conn, &state);
+                retile(&conn, &screen, &state);
+            }
+
+            Event::ConfigureRequest(e) => {
+                if !state.windows.contains(&e.window) {
+                    let aux = ConfigureWindowAux::new()
+                        .x(e.x.map(|value| value as i32))
+                        .y(e.y.map(|value| value as i32))
+                        .width(e.width)
+                        .height(e.height)
+                        .border_width(e.border_width)
+                        .sibling(e.sibling)
+                        .stack_mode(e.stack_mode);
+                    let _ = conn.configure_window(e.window, &aux);
+                }
             }
 
             Event::KeyPress(e) => {
@@ -131,6 +162,40 @@ fn handle_key(conn: &RustConnection, screen: &Screen, state: &mut WmState, keyco
     }
 
     retile(conn, screen, state);
+}
+
+fn run_autostart() {
+    let home = match env::var("HOME") {
+        Ok(value) => value,
+        Err(_) => {
+            warn!("HOME not set; skipping autostart");
+            return;
+        }
+    };
+    let path = PathBuf::from(home).join(".config/boringwm/autostart.sh");
+
+    let metadata = match fs::metadata(&path) {
+        Ok(metadata) => metadata,
+        Err(_) => {
+            warn!("autostart script not found: {}", path.display());
+            return;
+        }
+    };
+
+    if !metadata.is_file() {
+        warn!("autostart path is not a file: {}", path.display());
+        return;
+    }
+
+    let mode = metadata.permissions().mode();
+    if mode & 0o111 == 0 {
+        warn!("autostart script is not executable: {}", path.display());
+        return;
+    }
+
+    if let Err(error) = Command::new(&path).spawn() {
+        warn!("failed to launch autostart: {}", error);
+    }
 }
 
 fn close_window(conn: &RustConnection, window: Window) {
