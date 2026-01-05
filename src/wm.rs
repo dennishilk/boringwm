@@ -75,8 +75,7 @@ pub fn run() -> anyhow::Result<()> {
             }
 
             Event::DestroyNotify(e) => {
-                state.windows.retain(|&x| x != e.window);
-                state.focused = 0;
+                state.remove_window(e.window);
                 focus(&conn, &state);
                 retile(&conn, &screen, &state);
             }
