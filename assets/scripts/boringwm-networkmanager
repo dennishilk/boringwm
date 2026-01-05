@@ -1,40 +1,95 @@
 #!/bin/sh
 set -e
 
+rofi_mode=0
+if [ "$1" = "--rofi" ]; then
+  rofi_mode=1
+  shift
+fi
+
 if ! command -v nmcli >/dev/null 2>&1; then
+  if [ "$rofi_mode" -eq 1 ]; then
+    exit 1
+  fi
   rofi -e "NetworkManager (nmcli) not found."
   exit 1
 fi
 
-wifi_state="$(nmcli -t -f WIFI general status | head -n1)"
-if [ "$wifi_state" = "enabled" ]; then
-  toggle_wifi="Disable Wi-Fi"
+networking_state="$(nmcli -t -f NETWORKING general status | head -n1)"
+if [ "$networking_state" = "enabled" ]; then
+  toggle_networking="Networking: Disable"
 else
-  toggle_wifi="Enable Wi-Fi"
+  toggle_networking="Networking: Enable"
 fi
 
-networks="$(
+wifi_state="$(nmcli -t -f WIFI general status | head -n1)"
+if [ "$wifi_state" = "enabled" ]; then
+  toggle_wifi="Wi-Fi: Disable"
+else
+  toggle_wifi="Wi-Fi: Enable"
+fi
+
+active_connections="$(
+  nmcli -t -f NAME,TYPE,DEVICE connection show --active \
+    | awk -F: 'NF>=2 && $1 != "" {print "Disconnect: " $1 " [" $2 "]"}'
+)"
+
+inactive_connections="$(
+  nmcli -t -f NAME,TYPE,ACTIVE connection show \
+    | awk -F: 'NF>=3 && $1 != "" && $3 != "yes" {print "Activate: " $1 " [" $2 "]"}'
+)"
+
+wifi_networks="$(
   nmcli -t -f IN-USE,SSID dev wifi \
-    | awk -F: 'NF>=2 && $2 != "" {if ($1 == "*") print "✓ " $2; else print $2}' \
+    | awk -F: 'NF>=2 && $2 != "" {if ($1 == "*") print "Wi-Fi: ✓ " $2; else print "Wi-Fi: " $2}' \
     | sort -u
 )"
 
-menu="$(printf "%s\n%s" "$toggle_wifi" "$networks")"
-choice="$(printf "%s\n" "$menu" | rofi -dmenu -i -p "Network")"
+menu="$(printf "%s\n%s\n%s\n%s\n%s\n" \
+  "$toggle_networking" \
+  "$toggle_wifi" \
+  "$active_connections" \
+  "$inactive_connections" \
+  "$wifi_networks" \
+  | sed '/^$/d')"
+
+if [ "$rofi_mode" -eq 1 ]; then
+  if [ -z "${1:-}" ]; then
+    printf "%s\n" "$menu"
+    exit 0
+  fi
+  choice="$1"
+else
+  choice="$(printf "%s\n" "$menu" | rofi -dmenu -i -p "Network")"
+fi
 
 if [ -z "$choice" ]; then
   exit 0
 fi
 
 case "$choice" in
-  "Enable Wi-Fi")
+  "Networking: Enable")
+    nmcli networking on
+    ;;
+  "Networking: Disable")
+    nmcli networking off
+    ;;
+  "Wi-Fi: Enable")
     nmcli radio wifi on
     ;;
-  "Disable Wi-Fi")
+  "Wi-Fi: Disable")
     nmcli radio wifi off
     ;;
-  *)
-    ssid="$(printf "%s" "$choice" | sed 's/^✓ //')"
+  "Disconnect: "*)
+    connection_name="$(printf "%s" "$choice" | sed 's/^Disconnect: //; s/ \[.*\]$//')"
+    nmcli connection down "$connection_name"
+    ;;
+  "Activate: "*)
+    connection_name="$(printf "%s" "$choice" | sed 's/^Activate: //; s/ \[.*\]$//')"
+    nmcli connection up "$connection_name"
+    ;;
+  "Wi-Fi: "*)
+    ssid="$(printf "%s" "$choice" | sed 's/^Wi-Fi: //; s/^✓ //')"
     nmcli dev wifi connect "$ssid"
     ;;
 esac
