@@ -30,6 +30,28 @@ impl WmState {
             }
         }
     }
+
+    pub fn remove_window(&mut self, window: Window) {
+        let removed_index = self.windows.iter().position(|&w| w == window);
+        if let Some(index) = removed_index {
+            self.windows.retain(|&w| w != window);
+
+            if self.windows.is_empty() {
+                self.focused = 0;
+                return;
+            }
+
+            if self.focused == index {
+                self.focused = if index == 0 { 0 } else { index - 1 };
+            } else if index < self.focused {
+                self.focused -= 1;
+            }
+
+            if self.focused >= self.windows.len() {
+                self.focused = self.windows.len() - 1;
+            }
+        }
+    }
 }
 
 #[cfg(test)]
