@@ -48,7 +48,7 @@ If it runs correctly on Debian Stable, it is expected to run correctly on most o
 Branch Concept
 
 - `boringwm/` – stable main branch
-- `dev/` – development branch for new features and experiments
+- `dev` – development branch for new features and experiments
 - 📓 [View Changelog](CHANGELOG.md)
 ---
 
