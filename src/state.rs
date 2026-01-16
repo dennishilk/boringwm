@@ -101,4 +101,40 @@ mod tests {
 
         assert_eq!(state.focused, 2);
     }
+
+    #[test]
+    fn remove_window_updates_focus_when_focused_is_removed() {
+        let mut state = WmState::new();
+        state.windows = vec![10, 20, 30];
+        state.focused = 1;
+
+        state.remove_window(20);
+
+        assert_eq!(state.windows, vec![10, 30]);
+        assert_eq!(state.focused, 0);
+    }
+
+    #[test]
+    fn remove_window_decrements_focus_when_prior_window_removed() {
+        let mut state = WmState::new();
+        state.windows = vec![10, 20, 30, 40];
+        state.focused = 2;
+
+        state.remove_window(10);
+
+        assert_eq!(state.windows, vec![20, 30, 40]);
+        assert_eq!(state.focused, 1);
+    }
+
+    #[test]
+    fn remove_window_clears_focus_when_last_window_removed() {
+        let mut state = WmState::new();
+        state.windows = vec![10];
+        state.focused = 0;
+
+        state.remove_window(10);
+
+        assert!(state.windows.is_empty());
+        assert_eq!(state.focused, 0);
+    }
 }
