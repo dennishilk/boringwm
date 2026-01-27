@@ -126,4 +126,16 @@ mod tests {
         assert!(state.windows.is_empty());
         assert_eq!(state.focused, 0);
     }
+
+    #[test]
+    fn remove_missing_window_is_noop() {
+        let mut state = WmState::new();
+        state.windows = vec![10, 20, 30];
+        state.focused = 1;
+
+        state.remove_window(99);
+
+        assert_eq!(state.windows, vec![10, 20, 30]);
+        assert_eq!(state.focused, 1);
+    }
 }
