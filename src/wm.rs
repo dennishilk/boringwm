@@ -108,7 +108,7 @@ fn handle_key(
 
         // Browser
         keys::KEY_B => {
-            let _ = Command::new("firefox").spawn();
+            let _ = Command::new("firefox-esr").spawn();
         }
 
         // App launcher (rofi)
