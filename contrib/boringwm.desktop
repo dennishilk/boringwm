@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=BoringWM
 Comment=Predictable X11 tiling window manager
-Exec=/usr/local/bin/boringwm
-TryExec=/usr/local/bin/boringwm
+Exec=/usr/local/bin/boringwm-session
+TryExec=/usr/local/bin/boringwm-session
 Type=Application
 DesktopNames=BoringWM
 X-LightDM-DesktopName=BoringWM

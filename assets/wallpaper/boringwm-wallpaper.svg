@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <rect width="1920" height="1080" fill="#151719"/>
+  <rect x="720" y="405" width="480" height="270" rx="8" fill="none" stroke="#88ccff" stroke-width="3"/>
+  <text x="960" y="525" text-anchor="middle" fill="#e8eaed" font-family="monospace" font-size="54">BoringWM</text>
+  <text x="960" y="590" text-anchor="middle" fill="#8b949e" font-family="monospace" font-size="24">boring by design</text>
+</svg>
