@@ -46,7 +46,21 @@ feh --bg-fill "$HOME/.wallpaper" &
 picom &
 ```
 
-## Debian 13 installation
+## Debian 13 guided installation
+
+On a fresh Debian 13 minimal amd64 installation:
+
+```sh
+sudo apt update
+sudo apt install git
+git clone https://github.com/dennishilk/boringwm.git
+cd boringwm
+sudo ./install.sh
+```
+
+The guided installer detects an existing Debian user, reviews every change, and offers either a LightDM graphical login or console login with `startx`. Choose a complete small desktop or a coherent minimal environment. **It never creates users and never asks for or changes passwords.** See the [installer guide](docs/INSTALLER.md) for profiles, dry runs, automation, recovery, and removal.
+
+## Manual installation
 
 BoringWM has no official Debian package. On a minimal Debian 13 installation:
 
@@ -59,7 +73,7 @@ mkdir -p ~/.config/boringwm
 cp config/boringwm.example.toml ~/.config/boringwm/config.toml
 ```
 
-For `startx`, put `exec /usr/local/bin/boringwm` in `~/.xinitrc`. `make install` installs the display-manager session, session wrapper, manual page, and example config. If your display manager only scans `/usr/share/xsessions`, use `sudo make install PREFIX=/usr`. Install tools such as `kitty`, `thunar`, `firefox-esr`, `rofi`, `feh`, and `picom` separately as desired. The transparent Makefile honors `PREFIX` and `DESTDIR`.
+For `startx`, put `exec /usr/local/bin/boringwm-session` in `~/.xinitrc`. `make install` installs the display-manager session in `/usr/share/xsessions`, plus the session wrapper, manual page, and example config. Install tools such as `kitty`, `thunar`, `firefox-esr`, `rofi`, `feh`, and `picom` separately as desired. The transparent Makefile honors `PREFIX` and `DESTDIR`.
 
 Troubleshooting: run `DISPLAY=:0 RUST_LOG=boringwm=debug boringwm`; “another window manager” means one already owns `SubstructureRedirect`; config errors include their file and field. Key bindings currently assume a common US keycode map.
 
