@@ -1,0 +1,19 @@
+.TH BORINGWM 1 "July 2026" "BoringWM 0.9" "User Commands"
+.SH NAME
+boringwm \- predictable master/stack X11 window manager
+.SH SYNOPSIS
+.B boringwm
+.SH DESCRIPTION
+BoringWM is a keyboard-first X11 tiling window manager. It provides master/stack tiling, nine configurable workspaces, simple floating windows, EWMH fullscreen, and no desktop services.
+.SH CONFIGURATION
+Configuration is read once from ~/.config/boringwm/config.toml. A missing file uses compiled defaults. See boringwm.example.toml. Unknown or invalid fields are fatal and reported on standard error.
+.SH AUTOSTART
+If executable, ~/.config/boringwm/autostart.sh is started directly once. BoringWM does not provide wallpaper, compositing, panels, trays, notifications, locking, or launching UI.
+.SH KEYS
+Mod4+Return terminal; Mod4+T file manager; Mod4+B browser; Mod4+D launcher; Mod4+Q close; Mod4+J/K focus; Mod4+Shift+J/K reorder; Mod4+M promote; Mod4+H/L ratio; Mod4+F fullscreen; Mod4+Space floating; Mod4+1..9 workspace; Mod4+Shift+1..9 move; Mod4+Shift+R restart; Mod4+Shift+E exit.
+.SH ENVIRONMENT
+DISPLAY selects the X server. RUST_LOG sets stderr logging (for example boringwm=debug).
+.SH FILES
+~/.config/boringwm/config.toml; ~/.config/boringwm/autostart.sh
+.SH SEE ALSO
+startx(1), X(7)

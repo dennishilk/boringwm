@@ -1,0 +1,13 @@
+# BoringWM reads exactly ~/.config/boringwm/config.toml at startup.
+terminal = ["kitty"]
+file_manager = ["thunar"]
+browser = ["firefox-esr"]
+launcher = ["boringwm-rofi"]
+modifier = "Mod4"
+gaps = 8
+border_width = 2
+focused_border = "#88ccff"
+unfocused_border = "#333333"
+master_ratio = 0.60
+workspaces = 9
+# autostart = "/home/you/.config/boringwm/autostart.sh"
