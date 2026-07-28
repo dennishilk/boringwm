@@ -66,7 +66,7 @@ BoringWM has no official Debian package. On a minimal Debian 13 installation:
 
 ```sh
 sudo apt update
-sudo apt install build-essential cargo rustc libxcb1-dev xorg xinit dbus-x11
+sudo apt install build-essential cargo rustc rustfmt clippy libxcb1-dev xorg xinit dbus-x11
 cargo build --release
 sudo make install PREFIX=/usr/local
 mkdir -p ~/.config/boringwm

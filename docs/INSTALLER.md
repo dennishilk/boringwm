@@ -34,7 +34,7 @@ This path installs Xorg and xinit, selects `multi-user.target`, and writes an ex
 
 ## Profiles and packages
 
-Both profiles install `build-essential`, Debian's `cargo`/`rustc`, `libxcb1-dev`, `pkg-config`, `xorg`, `xinit`, `dbus-x11`, `x11-xserver-utils`, and `kitty`. Debian 13's packaged toolchain is used; no Rustup, third-party repository, signing key, binary download, upgrade, or source-list edit occurs.
+Both profiles install `build-essential`, Debian's `cargo`/`rustc`, the separately packaged `rustfmt` and `clippy` Cargo components, `libxcb1-dev`, `pkg-config`, `xorg`, `xinit`, `dbus-x11`, `x11-xserver-utils`, and `kitty`. Debian 13's packaged toolchain is used; no Rustup, third-party repository, signing key, binary download, upgrade, or source-list edit occurs.
 
 **Complete desktop** (default) adds `rofi`, `thunar`, `firefox-esr`, `gvfs`, and `polkitd`. (`policykit-1` was only a transitional package and is not used on Debian 13.) Its defaults match the canonical example configuration and key bindings. Its restrained optional checklist defaults to picom, feh, dunst, DejaVu/Liberation fonts, with xterm available as an off-by-default fallback. Helpers remain external to the Rust core.
 
@@ -44,7 +44,7 @@ LightDM packages are added only for the LightDM path. `--no-install-recommends` 
 
 ## Build, files, and safety
 
-The phases are detection, existing-user selection, choices, review, apt index, grouped package installation, Rust checks/build, Makefile installation, user configuration, login configuration, and verification. Cargo output and commands go to the mode-0600 `/var/log/boringwm-installer.log`. A failed phase is named and false success is never shown. The current implementation builds in the clone as the invoking root; this is a known tradeoff for clones that a selected account cannot access, and can leave root-owned `target/` artifacts. It never modifies Rust source.
+The phases are detection, existing-user selection, choices, review, apt index, grouped package installation, Rust formatting, Clippy and test checks, release build, Makefile installation, user configuration, login configuration, and verification. Cargo output and commands go to the mode-0600 `/var/log/boringwm-installer.log`. Every check is mandatory; a failed phase is named and false success is never shown. The current implementation builds in the clone as the invoking root; this is a known tradeoff for clones that a selected account cannot access, and can leave root-owned `target/` artifacts. It never modifies Rust source.
 
 The Makefile owns these repeatable system paths:
 
