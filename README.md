@@ -1,307 +1,81 @@
-## 🪟 BoringWM
+# BoringWM
 
-![Language](https://img.shields.io/badge/language-Rust-orange)
-![X11](https://img.shields.io/badge/display-X11-blue)
-![Status](https://img.shields.io/badge/status-early%20development-yellow)
-![Target](https://img.shields.io/badge/target-Debian%20Stable-green)
-![License](https://img.shields.io/badge/license-MIT-darkgrey)
-![Philosophy](https://img.shields.io/badge/philosophy-boring%20by%20design-black)
+![Rust](https://img.shields.io/badge/language-Rust-orange) ![X11](https://img.shields.io/badge/display-X11-blue) ![Status](https://img.shields.io/badge/status-beta%20%2F%201.0%20candidate-yellow)
 
----
+**BoringWM** is a small, keyboard-first X11 master/stack tiling window manager: *boring by design*. It aims for explicit state, predictable ordering, and a core one person can understand. It is not a desktop environment and does not provide a panel, tray, wallpaper, compositor, notifications, lock screen, launcher, or IPC. Those jobs remain external.
 
-## 🇬🇧 English / 🇩🇪 Deutsch
+![BoringWM screenshot](screenshot.png)
 
-**BoringWM** is a minimalist, Rust-based X11 window manager.
+## Implemented
 
-It is intentionally **boring by design**: predictable behavior, minimal features, no magic, no surprises.
+- Deterministic master/stack layout with bounded gaps, borders, ratio, and small-screen geometry.
+- Nine fixed workspaces by default, per-workspace order/focus, EWMH desktop/client/active-window properties.
+- Keyboard and deliberate pointer-enter focus; root focus when a workspace is empty.
+- EWMH fullscreen add/remove/toggle with saved floating state and geometry.
+- Floating transient/dialog windows and manual floating toggle.
+- Startup adoption, duplicate protection, lifecycle cleanup, override-redirect exclusion, configure requests, and recoverable per-client X11 errors.
+- Correct `WM_DELETE_WINDOW` with `KillClient` fallback, `WM_TAKE_FOCUS`, clean exit, and process replacement restart.
+- Static startup configuration and direct argument-vector spawning without a shell. Logging goes only to stderr (`RUST_LOG=boringwm=debug`).
 
-> **BoringWM is developed on NixOS, but targets Debian Stable first.**
+## Known limitations
 
-![BoringWM Screenshot](screenshot.png)
+BoringWM currently treats the complete X screen as one monitor. XRandR monitor discovery, independent monitor tiling, monitor movement, hotplug, and mouse drag/resize are not implemented. Fixed-size normal hints are not yet used to infer floating state. The parser accepts the documented flat TOML subset (strings, numbers, and string arrays), not arbitrary TOML. US X keycodes are currently used. There is no state-preserving handoff: restart cleanly exposes clients, execs itself, and adopts them again. These limitations keep the candidate honest; see the [manual test plan](docs/MANUAL_TEST_PLAN.md).
 
----
-
-## 🎯 Project Goals
-
-- Stability over features
-- Predictable and explicit behavior
-- Minimal surface area
-- Long-term maintainability
-- X11-first design with a possible Wayland future
-
-BoringWM does **not** aim to be the most configurable or flashy window manager.  
-It aims to be **correct**, **boring**, and **reliable**.
-
----
-
-## 🧪 Development vs Target Platforms
-
-**Development platform**
-- NixOS (reproducible builds, clean Rust toolchains)
-
-**Target / supported systems**
-- Primary target: Debian Stable (currently Debian 13)
-- Expected to work on Ubuntu, Linux Mint, Arch Linux and similar distributions
-
-If it runs correctly on Debian Stable, it is expected to run correctly on most other Linux systems.
----
-Branch Concept
-
-- `main` – stable main branch
-- `dev` – development branch for new features and experiments
-- 📓 [View Changelog](CHANGELOG.md)
----
-
-## 🧠 Design Philosophy
-
-- X11 only (for now)
-- No scripting language in the core
-- No hidden background services
-- No runtime configuration magic
-
-Configuration and extensibility may be added later, but never at the cost of simplicity or correctness.
-
----
-
-## 🪟 Features
-
-- Master / Stack tiling layout
-- Fixed, minimal gaps
-- Keyboard-driven workflow
-- Focused window border highlighting
-- Proper WM_DELETE_WINDOW handling
-- EWMH fullscreen support (games & video)
-- External compositor support (picom)
-- External wallpaper support (feh)
-
----
-
-## ⌨ Default Keybindings
+## Default keys
 
 | Key | Action |
-|-----|--------|
-| Mod + Enter | Open terminal (kitty) |
-| Mod + T | Open file manager (thunar) |
-| Mod + B | Open browser (firefox) |
-| Mod + D | Open File browser (rofi) |
-| Mod + Q | Close window |
-| Mod + J | Focus next window |
-| Mod + K | Focus previous window |
+|---|---|
+| Mod+Enter / T / B / D | terminal / file manager / browser / launcher |
+| Mod+Q | request client close |
+| Mod+J / K | focus next / previous |
+| Mod+Shift+J / K | swap with next / previous |
+| Mod+M | promote focused client to master |
+| Mod+H / L | decrease / increase master ratio |
+| Mod+F / Space | toggle fullscreen / floating |
+| Mod+1…9 | switch workspace |
+| Mod+Shift+1…9 | move focused client to workspace |
+| Mod+Shift+R / E | restart / exit |
 
----
+Num Lock and Caps Lock do not alter bindings. Commands, gaps, borders, colors, ratio, and workspace count are configurable. Copy `config/boringwm.example.toml` to `~/.config/boringwm/config.toml`. Missing config is normal; malformed or unknown values produce a fatal diagnostic instead of guessing.
 
-🇬🇧 Wallpaper setup
-
-BoringWM does not manage wallpapers itself.
-Wallpaper handling is intentionally delegated to external tools to keep the window manager simple and predictable.
-A common and minimal solution is feh.
-
-An official, minimal wallpaper is included in this repository under:
-
-assets/wallpaper/boringwm-wallpaper.png
-
-Set the wallpaper
-
-Copy the wallpaper to a fixed location:
-
-cp assets/wallpaper/boringwm-wallpaper.png ~/.wallpaper
-
-
-Then add the following line to your BoringWM autostart script:
-
-feh --bg-fill "$HOME/.wallpaper" &
-
-
-This approach keeps wallpaper configuration explicit, static, and boring by design.
-
----
-
-## 🐧 Installation on Debian 13 (Minimal)
-
-BoringWM is designed to run on a minimal Debian installation without a desktop environment.
+Autostart is `~/.config/boringwm/autostart.sh`. It is executed directly once (so add a shebang and executable bit). Example:
 
 ```sh
-# Base system
-sudo apt update
-sudo apt install -y xorg xinit dbus-x11 git curl
-
-# Rust (user-local)
-curl https://sh.rustup.rs -sSf | sh
-source ~/.cargo/env
-
-# Build and install BoringWM
-git clone https://github.com/dennishilk/boringwm.git
-cd boringwm
-cargo build --release
-sudo install -Dm755 target/release/boringwm /usr/local/bin/boringwm
-
-# Recommended desktop tools
-sudo apt install -y kitty picom feh
-
-# Autostart
-mkdir -p ~/.config/boringwm
-cat > ~/.config/boringwm/autostart.sh << 'EOF'
 #!/bin/sh
 feh --bg-fill "$HOME/.wallpaper" &
 picom &
-EOF
-chmod +x ~/.config/boringwm/autostart.sh
-
-# Start configuration
-echo "exec boringwm" > ~/.xinitrc
-
-# Start BoringWM
-startx
 ```
 
----
+## Debian 13 installation
 
+BoringWM has no official Debian package. On a minimal Debian 13 installation:
 
-
-
-
-## 🇩🇪 
-**BoringWM** ist ein minimalistischer, in Rust geschriebener X11-Window-Manager.
-
-Er ist bewusst **boring by design**:  
-vorhersehbares Verhalten, minimale Features, keine Magie, keine Überraschungen.
-
-> **BoringWM wird auf NixOS entwickelt, zielt aber primär auf Debian Stable ab.**
-
----
-
-## 🎯 Projektziele
-
-- Stabilität statt Feature-Vielfalt
-- Vorhersehbares und explizites Verhalten
-- Möglichst kleine Angriffs- und Fehlerfläche
-- Langfristige Wartbarkeit
-- X11-first-Design mit möglicher Wayland-Perspektive
-
-BoringWM möchte **nicht** der konfigurierbarste oder spektakulärste
-Window-Manager sein.  
-Er soll **korrekt**, **langweilig** und **zuverlässig** sein.
-
----
-
-## 🧪 Entwicklungs- vs. Zielplattformen
-
-**Entwicklungsplattform**
-- NixOS (reproduzierbare Builds, saubere Rust-Toolchains)
-
-**Ziel- / unterstützte Systeme**
-- Primäres Ziel: Debian Stable (aktuell Debian 13)
-- Erwartet lauffähig auf: Ubuntu, Linux Mint, Arch Linux und ähnlichen Distributionen
-
-Wenn BoringWM auf Debian Stable korrekt läuft,  
-sollte er auf den meisten anderen Linux-Systemen ebenfalls funktionieren.
----
-Branch Concept
-
-- `main` – stabiler Hauptzweig (main)
-- `dev` – Entwicklungszweig für neue Features und Experimente
-- 📓 [Änderungsverlauf](CHANGELOG.md)
----
-
-
-## 🧠 Design-Philosophie
-
-- X11 only (vorerst)
-- Keine Skriptsprache im Core
-- Keine versteckten Hintergrunddienste
-- Keine Laufzeit-Konfigurationsmagie
-
-Konfiguration und Erweiterbarkeit können später folgen,  
-aber niemals auf Kosten von Einfachheit oder Korrektheit.
-
----
-
-## 🪟 Features
-
-- Master/Stack-Tiling-Layout
-- Feste, minimale Gaps
-- Tastatur-zentrierter Workflow
-- Fokus-Hervorhebung über Fensterrahmen
-- Sauberes Schließen per WM_DELETE_WINDOW
-- EWMH-Fullscreen-Unterstützung (Spiele & Video)
-- Externer Compositor-Support (z. B. picom)
-- Externe Wallpaper-Unterstützung (z. B. feh)
-
----
-
-## ⌨ Standard-Tastenkürzel
-
-| Taste | Aktion |
-|------|--------|
-| Mod + Enter | Terminal öffnen (kitty) |
-| Mod + T | Öffne Dateimanager (thunar) |
-| Mod + B | Öffne Browser (firefox) |
-| Mod + D | Öffne Dateibrowser (rofi) |
-| Mod + Q | Fenster schließen |
-| Mod + J | Nächstes Fenster fokussieren |
-| Mod + K | Vorheriges Fenster fokussieren |
-
----
-
-🇩🇪 Wallpaper einrichten 
-
-BoringWM verwaltet Wallpaper bewusst nicht selbst.
-
-Die Hintergrundverwaltung wird absichtlich an externe Tools ausgelagert, um den Window-Manager einfach und vorhersehbar zu halten.
-Eine gängige und minimalistische Lösung ist feh.
-
-Ein offizielles, minimalistisches Wallpaper ist im Repository enthalten:
-assets/wallpaper/boringwm-wallpaper.png
-
-Kopiere das Wallpaper an einen festen Ort:
-
-cp assets/wallpaper/boringwm-wallpaper.png ~/.wallpaper
-
-
-Füge anschließend folgende Zeile in dein Autostart-Skript von BoringWM ein:
-
-feh --bg-fill "$HOME/.wallpaper" &
-
-
-So bleibt die Wallpaper-Konfiguration explizit, statisch und boring by design.
-
----
-
-## 🐧 Installation unter Debian 13 (Minimal)
 ```sh
-# Basissystem
 sudo apt update
-sudo apt install -y xorg xinit dbus-x11 git curl
-
-# Rust (benutzerlokal)
-curl https://sh.rustup.rs -sSf | sh
-source ~/.cargo/env
-
-# BoringWM bauen und installieren
-git clone https://github.com/dennishilk/boringwm.git
-cd boringwm
+sudo apt install build-essential cargo rustc libxcb1-dev xorg xinit dbus-x11
 cargo build --release
-sudo install -Dm755 target/release/boringwm /usr/local/bin/boringwm
-
-# Empfohlene Tools
-sudo apt install -y kitty picom feh
-
-# Autostart
+sudo make install PREFIX=/usr/local
 mkdir -p ~/.config/boringwm
-cat > ~/.config/boringwm/autostart.sh << 'EOF'
-#!/bin/sh
-feh --bg-fill "$HOME/.wallpaper" &
-picom &
-EOF
-chmod +x ~/.config/boringwm/autostart.sh
-
-# Startkonfiguration
-echo "exec boringwm" > ~/.xinitrc
-
-# Start
-startx
+cp config/boringwm.example.toml ~/.config/boringwm/config.toml
 ```
 
+For `startx`, put `exec /usr/local/bin/boringwm` in `~/.xinitrc`. `make install` installs the display-manager session, session wrapper, manual page, and example config. If your display manager only scans `/usr/share/xsessions`, use `sudo make install PREFIX=/usr`. Install tools such as `kitty`, `thunar`, `firefox-esr`, `rofi`, `feh`, and `picom` separately as desired. The transparent Makefile honors `PREFIX` and `DESTDIR`.
 
+Troubleshooting: run `DISPLAY=:0 RUST_LOG=boringwm=debug boringwm`; “another window manager” means one already owns `SubstructureRedirect`; config errors include their file and field. Key bindings currently assume a common US keycode map.
+
+## Development
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all
+cargo build --release
+```
+
+The pure layout and state/config transitions are unit tested. CI performs all commands above. Real-client validation remains in the manual checklist.
+
+## Deutsch
+
+BoringWM ist ein kleiner, tastaturorientierter X11-Tiling-Window-Manager mit Master/Stack-Layout — bewusst *boring by design*. Unterstützt werden Arbeitsflächen, vorhersehbarer Fokus, einfaches Floating, EWMH-Vollbild, statische Konfiguration sowie sauberer Neustart und Exit. BoringWM ist **keine Desktop-Umgebung**: Panel, Tray, Wallpaper, Compositor, Benachrichtigungen und Sperrbildschirm bleiben externe Programme. Die Installation, Tastenkürzel und bekannten Einschränkungen oben sind für beide Sprachen verbindlich; insbesondere fehlt derzeit echtes Multi-Monitor-/Hotplug- und Maus-Drag-Verhalten. Projektstatus: Beta / 1.0-Kandidat, nicht als stabil veröffentlicht.
 
 > boring is not a bug. it's a feature.

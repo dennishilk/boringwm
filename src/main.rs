@@ -1,10 +1,15 @@
-mod wm;
+mod commands;
+mod config;
+mod keys;
+mod layout;
 mod log;
 mod state;
-mod layout;
-mod keys;
+mod wm;
 
-fn main() -> anyhow::Result<()> {
+fn main() {
     log::init();
-    wm::run()
+    if let Err(error) = wm::run() {
+        ::log::error!("fatal: {error:#}");
+        std::process::exit(1);
+    }
 }
