@@ -35,7 +35,9 @@ mapfile -t users < <(find_existing_users_from_file "$tmp/passwd")
 ok test "${#users[@]}" -eq 2; ok test "${users[0]}" = "alice:$tmp/alice"; fail valid_desktop_account root 0 /root /bin/bash
 ok valid_desktop_account alice 1000 "$tmp/alice" /bin/bash
 build_package_plan lightdm complete yes yes yes yes no
-ok test " ${LOGIN_PACKAGES[*]} " = ' lightdm lightdm-gtk-greeter '; ok test " ${APPLICATION_PACKAGES[*]} " = ' rofi thunar firefox-esr gvfs policykit-1 '
+ok test " ${LOGIN_PACKAGES[*]} " = ' lightdm lightdm-gtk-greeter '; ok test " ${APPLICATION_PACKAGES[*]} " = ' rofi thunar firefox-esr gvfs polkitd '
+mapfile -t packages < <(package_plan)
+ok test "${packages[*]}" = 'build-essential cargo dbus-x11 dunst feh firefox-esr fonts-dejavu fonts-liberation gvfs kitty libxcb1-dev lightdm lightdm-gtk-greeter picom pkg-config polkitd rofi rustc thunar x11-xserver-utils xinit xorg'
 build_package_plan startx minimal no no no no no
 ok test "${#LOGIN_PACKAGES[@]}" -eq 0; ok test "${#APPLICATION_PACKAGES[@]}" -eq 0; ok test " ${X11_PACKAGES[*]} " = ' xorg xinit dbus-x11 x11-xserver-utils kitty '
 touch "$tmp/existing"; ok test "$(file_decision "$tmp/existing" keep)" = 'keep existing'; ok test "$(file_decision "$tmp/existing" replace)" = 'backup and replace'; ok test "$(file_decision "$tmp/new" keep)" = new

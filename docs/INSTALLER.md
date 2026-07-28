@@ -36,7 +36,7 @@ This path installs Xorg and xinit, selects `multi-user.target`, and writes an ex
 
 Both profiles install `build-essential`, Debian's `cargo`/`rustc`, `libxcb1-dev`, `pkg-config`, `xorg`, `xinit`, `dbus-x11`, `x11-xserver-utils`, and `kitty`. Debian 13's packaged toolchain is used; no Rustup, third-party repository, signing key, binary download, upgrade, or source-list edit occurs.
 
-**Complete desktop** (default) adds `rofi`, `thunar`, `firefox-esr`, `gvfs`, and `policykit-1`. Its defaults match the canonical example configuration and key bindings. Its restrained optional checklist defaults to picom, feh, dunst, DejaVu/Liberation fonts, with xterm available as an off-by-default fallback. Helpers remain external to the Rust core.
+**Complete desktop** (default) adds `rofi`, `thunar`, `firefox-esr`, `gvfs`, and `polkitd`. (`policykit-1` was only a transitional package and is not used on Debian 13.) Its defaults match the canonical example configuration and key bindings. Its restrained optional checklist defaults to picom, feh, dunst, DejaVu/Liberation fonts, with xterm available as an off-by-default fallback. Helpers remain external to the Rust core.
 
 **Minimal** adds no browser, file manager, launcher, compositor, wallpaper tool, notifications, or extra fonts. Its generated config maps unavailable application bindings to kitty so every launch binding remains honest and functional.
 
@@ -82,7 +82,7 @@ Run `sudo ./uninstall.sh`. The numbered menu can remove Makefile-owned system fi
 
 ## Troubleshooting and Proxmox
 
-Read `/var/log/boringwm-installer.log` after a package, test, build, or service failure. Confirm `/etc/os-release` says Debian 13/Trixie, `dpkg --print-architecture` says `amd64`, the selected home exists, and Debian repositories provide the reviewed package names. For config errors run `RUST_LOG=boringwm=debug boringwm` inside X.
+After updating apt, the installer now checks that every planned package is available before making an installation attempt. Package groups are installed separately, so a failure names the affected group, prints the failed command and the last 30 log lines, and retains the complete output in `/var/log/boringwm-installer.log`. Confirm `/etc/os-release` says Debian 13/Trixie, `dpkg --print-architecture` says `amd64`, the selected home exists, and the Debian 13 `main` repository is enabled. Fixing the repository or package-manager error and rerunning is safe. For config errors run `RUST_LOG=boringwm=debug boringwm` inside X.
 
 For Proxmox, use a Debian 13 amd64 VM (not an LXC), install the standard Debian user during setup, allocate a practical video display and memory, and test keyboard capture in the noVNC/SPICE console. The installer does not alter the hypervisor, VM networking, SSH, firewall, hostname, kernel, or guest tools.
 
