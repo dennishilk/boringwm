@@ -34,7 +34,7 @@ This path installs Xorg and xinit, selects `multi-user.target`, and writes an ex
 
 ## Profiles and packages
 
-Both profiles install `build-essential`, Debian's `cargo`/`rustc`, the separately packaged `rustfmt` and `clippy` Cargo components, `libxcb1-dev`, `pkg-config`, `xorg`, `xinit`, `dbus-x11`, `x11-xserver-utils`, and `kitty`. Debian 13's packaged toolchain is used; no Rustup, third-party repository, signing key, binary download, upgrade, or source-list edit occurs.
+Both profiles install `build-essential`, Debian's `cargo`/`rustc`, the separately packaged `rustfmt` and `rust-clippy` Cargo components, `libxcb1-dev`, `pkg-config`, `xorg`, `xinit`, `dbus-x11`, `x11-xserver-utils`, and `kitty`. Debian 13's packaged toolchain is used; no Rustup, third-party repository, signing key, binary download, upgrade, or source-list edit occurs.
 
 **Complete desktop** (default) adds `rofi`, `thunar`, `firefox-esr`, `gvfs`, and `polkitd`. (`policykit-1` was only a transitional package and is not used on Debian 13.) Its defaults match the canonical example configuration and key bindings. Its restrained optional checklist defaults to picom, feh, dunst, DejaVu/Liberation fonts, with xterm available as an off-by-default fallback. Helpers remain external to the Rust core.
 

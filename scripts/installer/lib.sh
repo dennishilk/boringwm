@@ -39,7 +39,7 @@ build_package_plan() {
     # Debian splits the Cargo subcommands used by the installer into their own
     # packages. Installing cargo and rustc alone does not provide `cargo fmt`
     # or `cargo clippy` on a minimal Debian system.
-    BUILD_PACKAGES=(build-essential cargo rustc rustfmt clippy libxcb1-dev pkg-config)
+    BUILD_PACKAGES=(build-essential cargo rustc rustfmt rust-clippy libxcb1-dev pkg-config)
     X11_PACKAGES=(xorg xinit dbus-x11 x11-xserver-utils kitty)
     APPLICATION_PACKAGES=()
     HELPER_PACKAGES=()
