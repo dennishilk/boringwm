@@ -42,7 +42,9 @@ build_package_plan() {
     HELPER_PACKAGES=()
     LOGIN_PACKAGES=()
     if [[ $profile == complete ]]; then
-        APPLICATION_PACKAGES=(rofi thunar firefox-esr gvfs policykit-1)
+        # policykit-1 was a transitional package and is no longer part of
+        # Debian 13.  polkitd is the actual Trixie package.
+        APPLICATION_PACKAGES=(rofi thunar firefox-esr gvfs polkitd)
     fi
     [[ $picom == yes ]] && HELPER_PACKAGES+=(picom)
     [[ $feh == yes ]] && HELPER_PACKAGES+=(feh)
@@ -51,6 +53,12 @@ build_package_plan() {
     [[ $xterm == yes ]] && HELPER_PACKAGES+=(xterm)
     [[ $login == lightdm ]] && LOGIN_PACKAGES=(lightdm lightdm-gtk-greeter)
     return 0
+}
+
+package_plan() {
+    printf '%s\n' "${BUILD_PACKAGES[@]}" "${X11_PACKAGES[@]}" \
+        "${APPLICATION_PACKAGES[@]}" "${HELPER_PACKAGES[@]}" \
+        "${LOGIN_PACKAGES[@]}" | sed '/^$/d' | sort -u
 }
 
 file_decision() {

@@ -16,6 +16,7 @@ This project follows Keep a Changelog and semantic versioning. Historical entrie
 - Split command spawning, configuration, state, layout, keys, logging, and X11 orchestration.
 - Hardened startup adoption, Map/Unmap/Destroy/Configure handling, duplicate suppression, focus fallback, client close, direct process spawning, and shutdown client restoration.
 - Updated documentation to describe implemented behavior rather than desktop-environment helpers.
+- Corrected the Debian 13 PolicyKit package and made installer failures actionable with package preflight checks, isolated package groups, failed-command reporting, and an immediate log excerpt.
 
 ### Known limitations
 - XRandR multi-monitor discovery/hotplug and mouse drag/resize are not implemented.

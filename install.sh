@@ -9,6 +9,7 @@ source "$REPO_ROOT/scripts/installer/lib.sh"
 DRY_RUN=no NON_INTERACTIVE=no ASSUME_YES=no TARGET_USER= LOGIN_METHOD= PROFILE=complete
 WITH_PICOM=yes WITH_FEH=yes WITH_DUNST=yes WITH_FONTS=yes WITH_XTERM=no REPLACE_EXISTING=no
 TARGET_HOME= TARGET_GROUP= CURRENT_PHASE="System detection" TEMP_DIR= UI=text
+LAST_COMMAND= LOG_TAIL_LINES=30
 
 usage() { cat <<'EOF'
 Usage: sudo ./install.sh [OPTIONS]
@@ -24,7 +25,18 @@ EOF
 }
 
 die() { printf '\nError: %s\n' "$*" >&2; exit 1; }
-on_error() { local status=$?; printf '\nInstallation failed during:\n\n  %s\n\nDetails were written to:\n\n  %s\n' "$CURRENT_PHASE" "$LOG_FILE" >&2; exit "$status"; }
+on_error() {
+    local status=$?
+    trap - ERR
+    printf '\nInstallation failed during:\n\n  %s\n' "$CURRENT_PHASE" >&2
+    [[ -z $LAST_COMMAND ]] || printf '\nFailed command:\n\n  %s\n' "$LAST_COMMAND" >&2
+    if [[ -s $LOG_FILE ]]; then
+        printf '\nLast %s log lines:\n\n' "$LOG_TAIL_LINES" >&2
+        tail -n "$LOG_TAIL_LINES" "$LOG_FILE" >&2
+    fi
+    printf '\nComplete log:\n\n  %s\n\nFix the reported error and run the installer again.\n' "$LOG_FILE" >&2
+    exit "$status"
+}
 cleanup() { [[ -z ${TEMP_DIR:-} ]] || rm -rf -- "$TEMP_DIR"; }
 trap cleanup EXIT
 trap on_error ERR
@@ -155,13 +167,38 @@ No user account or password will be created or changed.
 EOF
 }
 
-run_logged() { printf '+ %q ' "$@" >>"$LOG_FILE"; printf '\n' >>"$LOG_FILE"; "$@" >>"$LOG_FILE" 2>&1; }
+run_logged() {
+    printf -v LAST_COMMAND '%q ' "$@"
+    printf '+ %s\n' "$LAST_COMMAND" >>"$LOG_FILE"
+    "$@" >>"$LOG_FILE" 2>&1
+}
 phase() { CURRENT_PHASE=$2; printf '[%s/10] %s\n' "$1" "$2"; }
+verify_package_plan() {
+    local package missing=()
+    while IFS= read -r package; do
+        apt-cache show --no-all-versions "$package" >/dev/null 2>&1 || missing+=("$package")
+    done < <(package_plan)
+    if ((${#missing[@]})); then
+        printf '\nThe enabled Debian repositories do not provide: %s\n' "${missing[*]}" | tee -a "$LOG_FILE" >&2
+        printf 'Check /etc/apt/sources.list and files below /etc/apt/sources.list.d/. Debian 13 main is required.\n' | tee -a "$LOG_FILE" >&2
+        return 1
+    fi
+}
+install_package_group() {
+    local label=$1; shift
+    (($#)) || return 0
+    CURRENT_PHASE="Installing $label"
+    DEBIAN_FRONTEND=noninteractive run_logged apt-get install -y --no-install-recommends "$@"
+}
 install_packages() {
     phase 1 'Updating Debian package index'; run_logged apt-get update
-    phase 2 'Installing build dependencies'; DEBIAN_FRONTEND=noninteractive run_logged apt-get install -y --no-install-recommends "${BUILD_PACKAGES[@]}"
-    phase 3 'Installing X11 packages'; DEBIAN_FRONTEND=noninteractive run_logged apt-get install -y --no-install-recommends "${X11_PACKAGES[@]}"
-    phase 4 'Installing desktop applications'; local p=("${APPLICATION_PACKAGES[@]}" "${HELPER_PACKAGES[@]}" "${LOGIN_PACKAGES[@]}"); ((${#p[@]} == 0)) || DEBIAN_FRONTEND=noninteractive run_logged apt-get install -y --no-install-recommends "${p[@]}"
+    CURRENT_PHASE='Checking package availability'; LAST_COMMAND=; verify_package_plan
+    phase 2 'Installing build dependencies'; install_package_group 'build dependencies' "${BUILD_PACKAGES[@]}"
+    phase 3 'Installing X11 packages'; install_package_group 'X11 packages' "${X11_PACKAGES[@]}"
+    phase 4 'Installing desktop applications and login components'
+    install_package_group 'desktop applications' "${APPLICATION_PACKAGES[@]}"
+    install_package_group 'optional desktop helpers' "${HELPER_PACKAGES[@]}"
+    install_package_group 'login components' "${LOGIN_PACKAGES[@]}"
 }
 
 build_boringwm() {
