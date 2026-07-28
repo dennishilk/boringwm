@@ -202,8 +202,10 @@ install_packages() {
 }
 
 build_boringwm() {
-    phase 5 'Running BoringWM tests'; run_logged cargo fmt --all -- --check; run_logged cargo test --all
-    command -v cargo-clippy >/dev/null && run_logged cargo clippy --all-targets --all-features -- -D warnings
+    phase 5 'Running BoringWM checks and tests'
+    run_logged cargo fmt --all -- --check
+    run_logged cargo clippy --all-targets --all-features -- -D warnings
+    run_logged cargo test --all
     phase 6 'Building BoringWM release binary'; run_logged cargo build --release
 }
 install_boringwm() { phase 7 'Installing BoringWM system files'; run_logged make install PREFIX="$PREFIX"; }
